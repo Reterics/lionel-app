@@ -1,6 +1,6 @@
 {
   "name": "lionel-app",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A lightweight web application framework for learning, and make life more complicated.",
   "main": "server.js",
   "scripts": {
