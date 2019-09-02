@@ -66,8 +66,11 @@ class TemplateManagerBaseCore {
 		}
 		if (options.global) {
 			this.setGlobalJS(options.global);
-			this.loadGlobalJS();
+
+		} else {
+			this.setGlobalJS('./app/globals.js');
 		}
+		this.loadGlobalJS();
 		if (options.view) {
 			this.loadTemplates(options.view);
 		}
@@ -157,17 +160,20 @@ class TemplateManagerBaseCore {
              *  }
              *
              *  Any other HTML/JS template later for example if we navigate to Technology,Admin,Reports...etc will be loaded
-             *  by Lionel.getPage() code
+             *  by LionelClient.getPage() code
              */
-			const load = parameters.template ? 'Lionel.getPage("' + parameters.template + '")' : '';
+			const load = parameters.template ? 'LionelClient.getPage("' + parameters.template + '")' : '';
 
 			const globalJS = name.indexOf('_') !== -1 ? '<script type="text/javascript">' + self._templates.__globals.onRendered + '</script>' : '';
 			script = globalJS + '<script type="text/javascript">' + script + load + '}</script></head>';
 			html = html.replace('</head>', script);
-			if (html.indexOf('<body onload="onLoadData()"') !== -1) {
-				if (name === '__html' && self._templates.LionelHeader) {
-					html += self._templates.LionelHeader.html;
-				}
+			const positionBody = html.indexOf('<body');
+			const positionBodyEnd = html.indexOf('</body>');
+
+			if (positionBody !== -1 && positionBodyEnd !== -1) {
+				const start = html.slice(0,positionBody);
+				const end = html.slice(positionBodyEnd+7);
+				html = start + '<body onload="onLoadData()"><div class="LionelPageContent"></div></body>' + end;
 			}
 
 			return TemplateManagerBaseCore.sendRenderData(html, render);

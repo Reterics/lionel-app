@@ -1,9 +1,6 @@
 'use strict';
-const {parseArguments} = require("./appMethods");
-const { getArgumentValue } = require('./appMethods');
+const { parseArguments, getArgumentValue } = require("./appMethods");
 const FM = require('./fileManager').FM;
-const { libFolder } = require('../constants');
-const { jsFolder } = require('../constants');
 
 /**
  *
@@ -114,9 +111,8 @@ function waitForPort (port) {
 /**
  * Initialize the HTTP Web Server
  */
-const initServer = function () {
+const initServer = function (port) {
 	const argumentList = parseArguments();
-	const port = require('../constants').port;
 	process.env.PORT = getArgumentValue('port', argumentList) || port;
 	const normalizedPort = normalizePort(process.env.PORT);
 
@@ -133,8 +129,10 @@ const initServer = function () {
 /**
  * This function enables the live update for development
  * @param Lionel
+ * @param libFolder
+ * @param jsFolder
  */
-const enableSTDIN = function (Lionel) {
+const enableSTDIN = function (Lionel,libFolder,jsFolder) {
 	process.stdin.resume();
 	process.stdin.on('data', function () {
 		if (Lionel.templateManager._lastUpdated) {

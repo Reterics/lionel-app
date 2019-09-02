@@ -1,4 +1,4 @@
-Lionel.getPublicJS('jquery;popper;bootstrap;holder',function () {
+LionelClient.getPublicJS('jquery;popper;bootstrap;holder',function () {
 	Holder.addTheme('thumb', {
 		bg: '#55595c',
 		fg: '#eceeef',

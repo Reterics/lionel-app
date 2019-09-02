@@ -1,6 +1,5 @@
 'use strict';
 const { checkFile } = require('./mimeTypes');
-const { separator } = require('../constants');
 const { FM } = require('./fileManager');
 
 /**
@@ -11,7 +10,7 @@ const { FM } = require('./fileManager');
 const serverStatic = function (publicFolder) {
 	const path = require('path');
 	return function (req, res, next) {
-		const parsedURL = req.url.replace(new RegExp('/', 'g'), separator);
+		const parsedURL = req.url.replace(new RegExp('/', 'g'), FM.separator);
 		const filePath = path.join(publicFolder, parsedURL);
 		if (FM.fileExistsSync(filePath) && filePath.includes('.')) {
 			console.log('File found: ' + filePath);

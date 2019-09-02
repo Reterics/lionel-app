@@ -1,24 +1,12 @@
 'use strict';
-const { globalsJS, viewFolder, libFolder, publicFolder, jsFolder } = require('../constants');
-const { TemplateManagerBaseCore } = require('./templateManager');
+const { publicFolder } = require('../constants');
 
 const FM = require('./fileManager.js').FM;
 
 const getLib = (name) => FM.read(publicFolder + 'js' + FM.separator + name + '.js');
-/**
- * Initialize TemplateManager
- * @type {TemplateManagerBaseCore|*}
- */
-const TemplateManager = new TemplateManagerBaseCore({
-	lib: libFolder, // Importable files for require statements
-	global: globalsJS, // global/window functions/values
-	view: viewFolder, // HTML files
-	js: jsFolder, // onload/onrendered javascript files
-	debug: true
-});
 
 const Lionel = {
-	templateManager: TemplateManager,
+	templateManager: null,
 	_methods: {
 		__getRenderedTemplate: function (templateName) {
 			if (Lionel.templateManager && typeof Lionel.templateManager.renderTemplate === 'function') {
@@ -101,8 +89,8 @@ const Lionel = {
 			if (typeof this.routes[url] === 'function') {
 				this.routes[url].apply(this, []);
 				templateName = this.currentTemplate;
-			} else {
-				// templateName = url; // Patch: dont use every template
+			} else if(url === 'index'){
+				 templateName = url; // Patch: dont use every template
 			}
 			if (typeof callback === 'function') {
 				callback(templateName);

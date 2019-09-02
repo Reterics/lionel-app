@@ -1,5 +1,5 @@
 'use strict';
-const Lionel = {
+const LionelClient = {
 	/**
      * @param args
      * @returns {*|Promise<any>}
@@ -172,7 +172,7 @@ const Lionel = {
 				document.body.appendChild(script);
 			};
 			function _getLib () {
-				Lionel.call('__getPublicJS', name, function (error, result) {
+				LionelClient.call('__getPublicJS', name, function (error, result) {
 					if (!error) {
 						const node = document.querySelector('#externalLib' + n);
 						if (!node) {
@@ -225,7 +225,7 @@ const Lionel = {
 				name = name.toString().split(':')[0];
 			}
 			name = name.replace('/', '');
-			Lionel.call('__getRenderedTemplate', name, (error, result) => {
+			LionelClient.call('__getRenderedTemplate', name, (error, result) => {
 				if (error) {
 					reject(new Error(error));
 				} else {
@@ -238,7 +238,7 @@ const Lionel = {
      * Load pages/templates to Lionel
      *
      * 1. Get the template data from server {html:'HTML Code of page', onRendered:'JS code of page'}
-     * 2. Put HTML into <div class="LionelPageContent"></div> with Lionel._renderPage
+     * 2. Put HTML into <div class="LionelPageContent"></div> with LionelClient._renderPage
      * 3. Checks that there is a <script> for this template or not.
      *      -Yes: just call function from that window._onRendered_(nameofTemplate)()
      *      -No:  Put into a <script> and append to body, after that will call!
@@ -265,7 +265,7 @@ const Lionel = {
 			name = name.toString().split(':')[0];
 		}
 		name = name.replace('/', '');
-		Lionel.call('__getRenderedTemplate', name, function (error, result) {
+		LionelClient.call('__getRenderedTemplate', name, function (error, result) {
 			if (!error) {
 				self._renderPage(name, parent, result);
 			} else {
@@ -291,7 +291,7 @@ const Lionel = {
 		});
 	},
 	/**
-     * 2. Put HTML into <div class="LionelPageContent"></div> with Lionel._renderPage
+     * 2. Put HTML into <div class="LionelPageContent"></div> with LionelClient._renderPage
      * 3. Checks that there is a <script> for this template or not.
      *      -Yes: just call function from that global._onRendered_(nameofTemplate)()
      *      -No:  Put into a <script> and append to body, after that will call!
@@ -317,8 +317,8 @@ const Lionel = {
 			}
 			parentElement.innerHTML = result.html;
 			if (document.querySelector('#rendered' + name) !== null && window['_onRendered_' + name] !== undefined) {
-				Lionel._pageOnRendered(name);
-				Lionel._scriptOnRendered('', '_onRendered_' + name);
+				LionelClient._pageOnRendered(name);
+				LionelClient._scriptOnRendered('', '_onRendered_' + name);
 			} else if (result.onRendered) {
 				const script = document.createElement('script');
 				script.type = 'text/javascript';
@@ -326,7 +326,7 @@ const Lionel = {
 				// if(global.devMode === true){
 				//    script.src = 'console/'+name;
 				// }else{
-				script.innerHTML = 'window._onRendered_' + name + '=function(c){window.LionelError = "";Lionel._pageOnRendered();try{\n' + result.onRendered + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};Lionel._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
+				script.innerHTML = 'window._onRendered_' + name + '=function(c){window.LionelError = "";LionelClient._pageOnRendered();try{\n' + result.onRendered + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};LionelClient._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
 				// }
 				// script.src = 'rendered/'+result.onRendered+'.js';
 				document.querySelector('body').appendChild(script);
@@ -366,9 +366,9 @@ const Lionel = {
 
 		href = href.replace('#', '');
 		if (href === '') {
-			Lionel.getPage('index');
+			LionelClient.getPage('index');
 		} else {
-			Lionel.getPage(href.toString());
+			LionelClient.getPage(href.toString());
 		}
 	},
 	/**
@@ -454,5 +454,5 @@ const Lionel = {
 	}
 };
 module.exports = {
-	Lionel
+	LionelClient
 };
