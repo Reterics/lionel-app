@@ -125,6 +125,49 @@ function waitForPort (port) {
 }
 
 /**
+ * This function runs if we put a test argument to the server at starting with command line
+ * If there is a very basic serious error, it will shows up.
+ *
+ * This is not a good way. In the Road map will be some test cases...
+ * @param Lionel
+ * @param FM
+ * @param options
+ */
+const serverSelfTest = function (Lionel, FM, options) {
+	onListening();
+
+	if (!Lionel || !FM || !Lionel.templateManager) {
+		console.error('Server structure is broken');
+		process.exit(1);
+	}
+	const done = () => process.exit(0);
+
+	const simulatedRes = {
+		write:done,
+		send:done,
+		end:()=>{}
+	};
+	const simulatedReq = {
+		body:'',
+		headers: {'transfer-encoding':'utf-8','content-length':3}
+	};
+
+	if (!options.requestListener) {
+		process.exit(0);
+	} else if (typeof options.requestListener === 'function'){
+		options.requestListener(simulatedReq,simulatedRes);
+	} else if (options.requestListener.isLionel && typeof options.requestListener.listen === 'function') {
+		options.requestListener.listen(simulatedReq,simulatedRes);
+	} else {
+		console.error('Invalid request listener');
+		process.exit(1);
+	}
+	setTimeout(function () {
+		console.error('Request listener timeout');
+		process.exit(1);
+	},20000);
+};
+/**
  * Initialize the HTTP Web Server
  * @param {Number} port
  * @param {Object} options
@@ -183,7 +226,7 @@ const initLionelServer = function (port, options) {
 	server.on('error', function (error) {
 		onServerError.call(this, error, normalizedPort);
 	});
-	server.on('listening', onListening);
+	server.on('listening', getArgumentValue('test',argumentList) ? serverSelfTest(Lionel,FM,options): onListening);
 
 	server.listen(normalizedPort);
 	console.log('Server is Ready');

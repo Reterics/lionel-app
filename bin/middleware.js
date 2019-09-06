@@ -13,7 +13,7 @@ const { FM } = require('./fileManager');
 const serverStatic = function (publicFolder) {
 	const path = require('path');
 	return function (req, res, next) {
-		const parsedURL = req.url.replace(new RegExp('/', 'g'), FM.separator);
+		const parsedURL = (req.url || '').replace(new RegExp('/', 'g'), FM.separator);
 		const filePath = path.join(publicFolder, parsedURL);
 		if (FM.fileExistsSync(filePath) && filePath.includes('.')) {
 			console.log('File found: ' + filePath);
@@ -100,7 +100,7 @@ const lionelCallMiddle = function (req, res) {
 		res.redirect('/');
 	} else if (req.method === 'POST' && req.url === '/call') {
 		postCall(req, res);
-	} else if (!Lionel.Router.handleRequest(req.url, res)) {
+	} else if (!req.url || !Lionel.Router.handleRequest(req.url, res)) {
 		errorHandling(req, res);
 	}
 };
