@@ -1,4 +1,6 @@
 'use strict';
+const {TemplateManagerBaseCore} = require("./templateManager");
+const {lionelCallMiddle} = require("./middleware");
 const { parseArguments, getArgumentValue } = require("./appMethods");
 const FM = require('./fileManager').FM;
 
@@ -21,10 +23,24 @@ const normalizePort = function (val) {
 /**
  * Determine of the type of HTTP server and returns the server instance
  * @param {array} argumentList
+ * @param {object} options
  */
-const getServerInstance = function (argumentList) {
+const getServerInstance = function (argumentList,options) {
+	if (!options) options = {};
+
 	const { app } = require('../app');
 
+	let middleware = app;
+	if (options.requestListener){
+		middleware = options.requestListener;
+		if(typeof options.requestListener.use === 'function') {
+			options.requestListener.use(lionelCallMiddle)
+		}
+	} else {
+		middleware.use(lionelCallMiddle);
+	}
+
+	const listener = middleware.isLionel && typeof middleware.listen === 'function'? middleware.listen : middleware;
 	const certificateKey = getArgumentValue('key', argumentList);
 	const certificateCert = getArgumentValue('cert', argumentList) + '';
 	const serverType = certificateCert && certificateKey && FM.fileExists(certificateKey) && FM.fileExists(certificateCert) ? 'https' : 'http';
@@ -40,10 +56,10 @@ const getServerInstance = function (argumentList) {
 			requestCert: false,
 			rejectUnauthorized: false
 		};
-		server = https.createServer(options, app);
+		server = https.createServer(options, listener);
 	} else {
 		const http = require('http');
-		server = http.createServer(app.listen);
+		server = http.createServer(listener);
 	}
 	return server;
 };
@@ -110,13 +126,59 @@ function waitForPort (port) {
 
 /**
  * Initialize the HTTP Web Server
+ * @param {Number} port
+ * @param {Object} options
+ * @param {String} options.lib
+ * @param {String} options.view
+ * @param {String} options.js
+ * @param {String} options.debug
+ * @param {String} options.mainDirectory
+ * @param {String} options.separator
+ * @param {String} options.appData
+ * @param {String} options.appName
+ * @param {Boolean} options.liveUpdate
+ * @param {function|undefined|null} options.requestListener
  */
-const initServer = function (port) {
+const initLionelServer = function (port, options) {
+
+	// eslint-disable-next-line no-undef
+	const FM = require('./fileManager.js').FM;
+	FM._validateAppData();
+	FM.setVariables(options);
+
+	/**
+	 * Init global Lionel Object
+	 * @type {{methods, startup, Router, templateManager}}
+	 */
+	const Lionel = require('./LionelClass').Lionel;
+
+	/**
+	 * Initialize TemplateManager
+	 * @type {TemplateManagerBaseCore|*}
+	 */
+	Lionel.templateManager = new TemplateManagerBaseCore({
+		lib: options.lib, // Importable files for require statements
+		//global: globalsJS, // global/window functions/values
+		view: options.view, // HTML files
+		js: options.js, // onload/onRendered javascript files
+		debug: options.debug
+	});
+
+	if (FM.fileExistsSync('../app/routes')) {
+		require('../app/routes');
+	}
+	console.log(Lionel && Lionel.templateManager ? 'Lionel object loaded...' : 'Unknown error in Lionel Object');
+
+	if (options.liveUpdate) {
+		const { enableSTDIN } = require('./initLionelServer');
+		enableSTDIN(Lionel,options.lib,options.js);
+	}
+
 	const argumentList = parseArguments();
 	process.env.PORT = getArgumentValue('port', argumentList) || port;
 	const normalizedPort = normalizePort(process.env.PORT);
 
-	const server = getServerInstance(argumentList);
+	const server = getServerInstance(argumentList,options);
 
 	server.on('error', function (error) {
 		onServerError.call(this, error, normalizedPort);
@@ -172,4 +234,4 @@ const enableSTDIN = function (Lionel,libFolder,jsFolder) {
 	});
 };
 
-module.exports = { initServer, enableSTDIN };
+module.exports = { initLionelServer, enableSTDIN };

@@ -1,4 +1,7 @@
 'use strict';
+const { Lionel } = require("./LionelClass");
+const { errorHandling } = require("./requestManager");
+const { postCall } = require("./requestManager");
 const { checkFile } = require('./mimeTypes');
 const { FM } = require('./fileManager');
 
@@ -54,6 +57,7 @@ const lionelMiddleware = function () {
 			}
 		}
 	};
+	self.isLionel = true;
 
 	self.listen = function (req, res) {
 		const closeResponse = function () {
@@ -86,8 +90,23 @@ const lionelMiddleware = function () {
 	};
 	return self;
 };
+/**
+ * Middleware function what enabled LionelClient.call connections with the server
+ * @param req
+ * @param res
+ */
+const lionelCallMiddle = function (req, res) {
+	if (req.method === 'GET' && req.url === '/call') {
+		res.redirect('/');
+	} else if (req.method === 'POST' && req.url === '/call') {
+		postCall(req, res);
+	} else if (!Lionel.Router.handleRequest(req.url, res)) {
+		errorHandling(req, res);
+	}
+};
 
 module.exports = {
 	lionelMiddleware,
 	serverStatic,
+	lionelCallMiddle
 };

@@ -10,6 +10,28 @@ const FM = {
 	separator: separator,
 	appData: appData,
 	uploadDir: this.appData,
+	/**
+	 * @param {Object} options
+	 * @param {String} options.mainDirectory
+	 * @param {String} options.separator
+	 * @param {String} options.appData
+	 * @param {String} options.appName
+	 */
+	setVariables: function (options){
+		if (options.mainDirectory) {
+			this.mainDirectory = options.mainDirectory;
+		}
+		if (options.separator) {
+			this.separator = options.separator;
+		}
+		if (options.appData) {
+			this.appData = options.appData;
+		}
+		if (options.appName) {
+			this.appName = options.appName;
+		}
+
+	},
 	_validateAppData: function () {
 		if (this.fileExists(this.appData)) {
 			if (this.fileExists(this.appData + '/' + this.appName)) {

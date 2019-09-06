@@ -26,6 +26,7 @@
 
 const fs = require('fs');
 const FM = require('./fileManager.js').FM;
+const path = require('path');
 
 class TemplateManagerBaseCore {
 	constructor (options) {
@@ -68,7 +69,7 @@ class TemplateManagerBaseCore {
 			this.setGlobalJS(options.global);
 
 		} else {
-			this.setGlobalJS('./app/globals.js');
+			this.setGlobalJS(path.resolve(__dirname,'../app/globals.js'));
 		}
 		this.loadGlobalJS();
 		if (options.view) {
