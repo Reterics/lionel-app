@@ -32,18 +32,29 @@ const FM = {
 		}
 
 	},
+	/**
+	 * @returns {boolean}
+	 * @private
+	 */
 	_validateAppData: function () {
+		let error = false;
 		if (this.fileExists(this.appData)) {
-			if (this.fileExists(this.appData + '/' + this.appName)) {
-				console.log('Database Source validated');
-				if (!this.fileExists(this.appData + '/' + this.appName + '/uploads')) {
+			try {
+				if (this.fileExists(this.appData + '/' + this.appName)) {
+					console.log('Database Source validated');
+					if (!this.fileExists(this.appData + '/' + this.appName + '/uploads')) {
+						fs.mkdirSync(this.appData + '/' + this.appName + '/uploads');
+					}
+				} else {
+					fs.mkdirSync(this.appData + '/' + this.appName);
 					fs.mkdirSync(this.appData + '/' + this.appName + '/uploads');
 				}
-			} else {
-				fs.mkdirSync(this.appData + '/' + this.appName);
-				fs.mkdirSync(this.appData + '/' + this.appName + '/uploads');
+			} catch (e) {
+				console.error(e.message);
+				error = true;
 			}
 		}
+		return !error;
 	},
 	/**
      * @param {String} dir
