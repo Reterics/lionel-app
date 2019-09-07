@@ -1,17 +1,22 @@
 {
   "name": "lionel-app",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "A lightweight web application framework for learning, and make life more complicated.",
   "main": "server.js",
   "scripts": {
     "Start Server": "node server.js"
   },
-  "keywords": ["framework","web","server"],
+  "keywords": [
+    "framework",
+    "web",
+    "server"
+  ],
   "author": "Attila Reterics",
   "license": "GPL",
   "dependencies": {
     "body-parser": "^1.19.0",
-    "serve-favicon": "^2.5.0"
+    "serve-favicon": "^2.5.0",
+    "lionel-commonjs-bundler": "^1.0.2"
   },
   "devDependencies": {
     "eslint": "^6.2.2"

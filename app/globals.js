@@ -7,7 +7,7 @@ const LionelClient = {
 	call: function (...args) {
 		let i = 1;
 		const isThereCallback =  typeof args[args.length - 1] === 'function';
-		let lastArgument = isThereCallback ? args.length - 1 : args.length;
+		const lastArgument = isThereCallback ? args.length - 1 : args.length;
 		if (args.length === 0 || typeof args[0] !== 'string') {
 			if (isThereCallback) {
 				args[0](true, 'At least one parameters are needed for call');
@@ -453,6 +453,5 @@ const LionelClient = {
 		return '';
 	}
 };
-module.exports = {
-	LionelClient
-};
+if (!window._modules) { window._modules = {}; }
+module.exports = { LionelClient };

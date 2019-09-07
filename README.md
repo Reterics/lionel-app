@@ -23,6 +23,73 @@ Lionel backend give you:
     * CPU + RAM friendly development: Because of the project doesn't have too much dependencies and it doesn't have big tasks in the background, you can develop in an older computer without any problems too
     * Responsiveness
 
+## Install
+
+Install from console
+```
+npm install lionel-app
+```
+
+First server (basic)
+
+```javascript
+const {initLionelServer} = require("lionel-app/bin/initLionelServer");
+const {Lionel} = require("lionel-app/bin/LionelClass");
+const Router = Lionel.Router;
+
+const port = 8080;
+initLionelServer(port,{
+	appData: 'appData', //Folder in application data. (If needed)
+	appName: 'Application', // Application name
+	lib:'./app/lib/', //Folder for the CommonJS exports (Deprecated)
+	view:'./app/views/', //Folder for the HTML files/templates
+	js:'./app/js/', //Folder path for the onRendered Javascripts for the templates
+	debug:true,
+	liveUpdate:true, // Reload folders during the development
+	mainDirectory:__dirname, //Current working directory
+	separator:__dirname.indexOf('/') !== -1 ? '/' : '\\', //Path separator, (slash) If you want to add a custom
+	requestListener:function(req,res) {
+		//HTTP Server Request listener or middleware
+	}
+});
+
+
+Router.route('/index');
+Router.route('/', 'index');
+
+```
+
+First server (Middleware)
+
+For middleware you can use Express JS and Lionel Middleware too. Usage is almost the same. Details in the documentation later
+
+```javascript
+const {initLionelServer} = require("lionel-app/bin/initLionelServer");
+const {Lionel} = require("lionel-app/bin/LionelClass");
+const Router = Lionel.Router;
+
+const {app} = require("./app");
+
+
+const port = 8080;
+initLionelServer(port,{
+	appData: 'appData', //Folder in application data. (If needed)
+	appName: 'Application', // Application name
+	lib:'./app/lib/', //Folder for the CommonJS exports (Deprecated)
+	view:'./app/views/', //Folder for the HTML files/templates
+	js:'./app/js/', //Folder path for the onRendered Javascripts for the templates
+	debug:true,
+	liveUpdate:true, // Reload folders during the development
+	mainDirectory:__dirname, //Current working directory
+	separator:__dirname.indexOf('/') !== -1 ? '/' : '\\', //Path separator, (slash) If you want to add a custom
+	requestListener:app //Middleware
+});
+
+
+Router.route('/index');
+Router.route('/', 'index');
+
+```
 ## Future updates
 
 Because of the Lionel App project is not done, it means i will send more updates in the future with

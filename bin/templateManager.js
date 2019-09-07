@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Lionel Framework: Template Manager
+ * Lionel-App: Template Manager
  * Copyright (C) 2016 Attila Reterics
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    RedAty
- * @subpackage lionel-app
+ * @package    ReadAty/lionel-app
  * @author     Attila Reterics
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
  * @copyright  (C) 2016 Attila Reterics, reterics.attila@gmail.com
@@ -27,6 +26,7 @@
 const fs = require('fs');
 const FM = require('./fileManager.js').FM;
 const path = require('path');
+const { commonJSBundler } = require('lionel-commonjs-bundler');
 
 class TemplateManagerBaseCore {
 	constructor (options) {
@@ -67,7 +67,6 @@ class TemplateManagerBaseCore {
 		}
 		if (options.global) {
 			this.setGlobalJS(options.global);
-
 		} else {
 			this.setGlobalJS(path.resolve(__dirname,'../app/globals.js'));
 		}
@@ -141,9 +140,6 @@ class TemplateManagerBaseCore {
          */
 		if (html.indexOf('</head>') !== -1) {
 			script = 'function onLoadData(){';
-			if (name === '__html' && self._templates.LionelHeader) {
-				script += self._templates.LionelHeader.onRendered;
-			}
 			this._renderedList.forEach(function (name) {
 				script += self._templates[name].onRendered + '\n';
 			});
@@ -172,8 +168,8 @@ class TemplateManagerBaseCore {
 			const positionBodyEnd = html.indexOf('</body>');
 
 			if (positionBody !== -1 && positionBodyEnd !== -1) {
-				const start = html.slice(0,positionBody);
-				const end = html.slice(positionBodyEnd+7);
+				const start = html.slice(0, positionBody);
+				const end = html.slice(positionBodyEnd + 7);
 				html = start + '<body onload="onLoadData()"><div class="LionelPageContent"></div></body>' + end;
 			}
 
@@ -429,21 +425,8 @@ class TemplateManagerBaseCore {
 
 		const globalJavascript = this.globalJS ? fs.readFileSync(this.globalJS).toString() : '';
 		this._templates.__globals = {
-			onRendered: this.globalJS ? this._fileUnification.call(this, globalJavascript, true) : ''
+			onRendered: this.globalJS ? globalJavascript.replace('module.exports = { LionelClient };', '') : ''
 		};
-		const self = this;
-		this._templates.__globals.onRendered = this._templates.__globals.onRendered.replace(this._regexps.save.parent, function (d) {
-			if (d.toString().match(self._regexps.save.content)) {
-				return d.replace(self._regexps.save.variable, '');
-			} else {
-				return '';
-			}
-		});
-
-		if (!this._templates.__globals || !this._templates.__globals.onRendered ||
-            this._templates.__globals.onRendered === '') {
-			console.warn('Global variables probably not installed well, or you have no global javascript specified.');
-		}
 	}
 
 	/**
@@ -491,7 +474,12 @@ class TemplateManagerBaseCore {
 
 			this.loadedBuffer = {};
 
-			this._templates[name].onRendered = this._fileUnification.call(this, html, name === '__html');
+			const isGlobal = name === '__html';
+
+			this._templates[name].onRendered = commonJSBundler.makeCode(html, controllerDir, {
+				loadedFiles: isGlobal ? this.globalStorage : {},
+				loadedCache: isGlobal ? {} : this.globalStorage
+			}); // this._fileUnification.call(this, html, name === '__html');
 
 			this.loadedBuffer = {};
 		}
@@ -513,8 +501,14 @@ class TemplateManagerBaseCore {
 		const html = fs.readFileSync(file).toString();
 
 		this.loadedBuffer = {};
+		const isGlobal = name === '__html';
 
-		this._templates[name].onRendered = this._fileUnification.call(this, html, name === '__html');
+		this._templates[name].onRendered = commonJSBundler.makeCode(html, address.substring(0,address.lastIndexOf('/') + 1), {
+			loadedFiles: isGlobal ? this.globalStorage : {},
+			loadedCache: isGlobal ? {} : this.globalStorage
+		});
+
+		// this._templates[name].onRendered = this._fileUnification.call(this, html, name === '__html');
 		console.log(this._templates[name].onRendered);
 		this.loadedBuffer = {};
 		if (this._debugMode === true) console.log('Loaded ' + file + ' Template OnRendered Data to Loader');
