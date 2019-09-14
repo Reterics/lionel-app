@@ -5,7 +5,7 @@ const FM = require('./fileManager.js').FM;
 const path = require('path');
 
 const getLib = (name) => {
-	const place = path.resolve(__dirname,'..'+FM.separator+'app'+FM.separator+'public'+FM.separator+name+'.js');
+	const place = path.resolve(__dirname,'..'+FM.separator+'app'+FM.separator+'public'+FM.separator+'js'+FM.separator+name+'.js');
 	if (FM.fileExistsSync(place)) {
 		return place;
 	} else if (FM.fileExistsSync(publicFolder + 'js' + FM.separator + name + '.js')) {
