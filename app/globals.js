@@ -1,4 +1,22 @@
 'use strict';
+/**
+ * Input Form
+ * @typedef {Object} InputForm
+ * @property {string} name - Name attribute
+ * @property {string} type - Type attribute,
+ * can be: button,checkbox,color,date,datetime-local,email,file,hidden,image,month,number,password,
+ * radio,range,reset,search,submit,tel,text,time,url,week
+ * @property {string} value - Value of the input
+ * @property {string} placeholder
+ * @property {boolean} checked
+ * @property {string} innerHTML
+ * @property {string} id - Important for the label
+ * @property {string} label - Description/title for input
+ */
+
+/**
+ * Lionel Client Object
+ */
 const LionelClient = {
 	/**
      * @param args
@@ -207,6 +225,515 @@ const LionelClient = {
 			}
 			_statement(_getLib());
 		});
+	},
+	Helper: {
+		node: null,
+
+		/**
+		 * @param {string|string[]} className
+		 * @returns {Helper}
+		 */
+		addClass(className){
+			const self = this;
+			if (className && self.node instanceof HTMLElement) {
+				if (typeof className === 'string') {
+					className.split(' ').forEach(className => {
+						if( className ) {
+							self.node.classList.add(className);
+						}
+					})
+				} else if(Array.isArray(className)){
+					className.forEach(string => {
+						if(typeof string === 'string' && string){
+							self.node.classList.add(string);
+						}
+					})
+				}
+			}
+			return this;
+		},
+
+		/**
+		 * @param {Object} styles
+		 * @returns {Helper}
+		 */
+		setStyles(styles) {
+			if (styles && typeof styles === 'object' && self.node instanceof HTMLElement) {
+				const keys = Object.keys(styles);
+
+				keys.forEach(key => {
+					if( key && typeof key === 'string') {
+
+						const parts = key.split('-');
+
+						if (parts.length === 1) {
+							self.node.style[key] = styles[key];
+						} else {
+							let formattedStyleName = '';
+							parts.forEach((part,index) => {
+								if (part){
+									if (index) {
+										formattedStyleName += part.charAt(0) + part.substring(1);
+									} else {
+										formattedStyleName += part;
+									}
+								}
+
+							})
+						}
+					}
+				});
+			}
+			return this;
+		},
+
+		append(...nodes) {
+			if (this.node instanceof HTMLElement) {
+
+				for (let i = 0; i < nodes.length; i++) {
+
+					if(nodes[i] instanceof HTMLElement){
+						this.node.appendChild(nodes[i]);
+					} else if (typeof nodes[i] === 'object' && nodes[i].node instanceof HTMLElement){
+						this.node.appendChild(nodes[i].node);
+					}
+				}
+			}
+			return this;
+		},
+
+		/**
+		 * @param {Object} attributes
+		 * @returns {Helper}
+		 */
+		setAttributes(attributes) {
+			if (this.node instanceof HTMLElement && attributes && typeof attributes === 'object') {
+				const keys = Object.keys(attributes);
+				const self = this;
+
+				keys.forEach(key => {
+					self.node.setAttribute(key,attributes[key]);
+				});
+			}
+			return this;
+		},
+
+		/**
+		 * @param {string} eventName
+		 * @param {function} method
+		 * @returns {Helper}
+		 */
+		on(eventName, method) {
+			if (this.node instanceof HTMLElement && eventName
+				&& typeof eventName === 'string' && typeof method === 'function') {
+				this.node['on'+eventName] = method;
+			}
+			return this;
+		},
+
+		/**
+		 * @param {string} name
+		 * @param {string} data
+		 * @returns {Helper}
+		 */
+		setData(name,data) {
+			if (this.node instanceof HTMLElement && name && typeof name === 'string' && data ) {
+				this.node.setAttribute('data-'+name,data);
+			}
+			return this;
+		},
+
+		/**
+		 * @param {string} name
+		 * @returns {Helper}
+		 */
+		removeData(name) {
+			if (this.node instanceof HTMLElement && name && typeof name === 'string' ) {
+				this.node.removeAttribute('data-'+name);
+			}
+			return this;
+		},
+
+		/**
+		 * @param {string} name
+		 * @returns {string|null}
+		 */
+		getData(name) {
+			if (this.node instanceof HTMLElement && name && typeof name === 'string') {
+				return this.node.getAttribute(name);
+			}
+			return null;
+		},
+
+		getAllData() {
+			const attributes = this.attributes;
+			const length = attributes.length;
+			const result = [];
+			for (let i = 0; i < length; i++) {
+				result.push({
+					name:attributes[i].name,
+					value: attributes[i].value
+				});
+			}
+			return result;
+		},
+
+		/**
+		 * @param {string} type
+		 * @param {Object} details
+		 * @param details.className
+		 * @param details.classList
+		 * @param details.styles
+		 * @param details.innerHTML
+		 * @param details.innerText
+		 * @param details.innerElement
+		 * @param details.innerElements
+		 * @param details.id
+		 * @param details.checked
+		 * @returns {Helper}
+		 */
+		createElement(type,details) {
+			if ( !type ) {
+				type = 'div'
+			}
+			if ( !details ) {
+				details = {};
+			}
+			if (typeof type !== 'string' || typeof details !== 'object') {
+				throw 'Error: Invalid type';
+			}
+			this.node = document.createElement(type);
+			const self = this;
+
+			if (details.className) {
+				this.addClass(details.className);
+			}
+			if (details.classList) {
+				this.addClass(details.classList)
+			}
+			if (details.styles) {
+				this.setStyles(details);
+			}
+			if (details.innerHTML) {
+				this.node.innerHTML = details.innerHTML;
+			}
+			if (details.innerText) {
+				this.node.innerHTML = details.innerText;
+			}
+			if (details.innerElement instanceof HTMLElement) {
+				this.node.appendChild(details.innerElement)
+			}
+			if (Array.isArray(details.innerElements)) {
+				details.innerElements.forEach(element => {
+					if (element instanceof HTMLElement) {
+						self.node.appendChild(element);
+					}
+				});
+			}
+			if (details.id) {
+				this.node.id = details.id;
+			}
+			if (details.checked) {
+				this.node.id = details.checked;
+			}
+			return this;
+		},
+
+		/**
+		 * @param {Array[]} lineArray
+		 * @param {Object} details
+		 * @param details.className
+		 * @param details.classList
+		 * @param details.styles
+		 * @param details.header
+		 * @param details.footer
+		 * @param details.events
+		 * @returns {Helper}
+		 */
+		createTable(lineArray,details) {
+			if (!lineArray) {
+				lineArray = [];
+			}
+
+			if ( !details ) {
+				details = {};
+			}
+			if(!Array.isArray(lineArray) || typeof details !== 'object') {
+				throw 'Error: Invalid type';
+			}
+
+			this.node = document.createElement('table');
+
+			if (details.className) {
+				this.addClass(details.className);
+			}
+			if (details.classList) {
+				this.addClass(details.classList)
+			}
+			if (details.styles) {
+				this.setStyles(details);
+			}
+
+			const getTableLine = function (columns, type = 'td') {
+				const tr = document.createElement('tr');
+
+				if (Array.isArray(columns)) {
+					columns.forEach(column => {
+						const tableElement = document.createElement(type);
+						if (typeof column === 'string' || typeof column === 'number'){
+							tableElement.innerHTML = column
+						} else if (typeof column === 'function') {
+							const functionResult = column();
+
+							if (functionResult instanceof HTMLElement) {
+								tableElement.appendChild(functionResult)
+							} else if (functionResult) {
+								tableElement.innerHTML = functionResult;
+							}
+						} else if (column instanceof HTMLElement) {
+							tableElement.appendChild(column);
+						} else if (column && typeof column === 'object') {
+							try {
+								tableElement.innerHTML = JSON.stringify(column);
+							} catch ( e ) {
+								console.warn(e);
+							}
+						} else {
+							console.warn('Invalid column data')
+						}
+
+						tr.appendChild(tableElement);
+					});
+				}
+
+				if (details.events && typeof details.events === 'object') {
+					const names = Object.keys(details.events);
+					names.forEach(event => {
+						if (typeof details.events[event] === 'function') {
+							tr[event] = function (ev) {
+								if (typeof ev.preventDefault === 'function') {
+									ev.preventDefault();
+								}
+								details.events[event](columns,ev);
+							}
+						}
+					})
+				}
+
+				return tr;
+			};
+
+			const thead = document.createElement('thead');
+			if (Array.isArray(details.header)) {
+				thead.appendChild(getTableLine(details.header,'th'));
+			}
+			this.node.appendChild(thead);
+			const tbody = document.createElement('tbody');
+			lineArray.forEach(line => {
+				tbody.appendChild(getTableLine(line));
+			});
+			this.node.appendChild(tbody);
+
+			if (Array.isArray(details.footer)) {
+				const tfoot = document.createElement('tfoot');
+				tfoot.appendChild(getTableLine(details.footer));
+				this.node.appendChild(tfoot);
+			}
+			return this;
+		},
+
+		/**
+		 * @param {Array} options
+		 * @param {Object} details
+		 * @param details.className
+		 * @param details.classList
+		 * @param details.styles
+		 * @param details.label
+		 * @param details.id
+		 * @returns {Helper}
+		 */
+		createSelector(options,details) {
+			if (!options) {
+				options = [];
+			}
+
+			if ( !details ) {
+				details = {};
+			}
+			if(!Array.isArray(options) || typeof details !== 'object') {
+				throw 'Error: Invalid type';
+			}
+
+			this.node = document.createElement('select');
+			const self = this;
+			if (details.className) {
+				this.addClass(details.className);
+			}
+			if (details.classList) {
+				this.addClass(details.classList)
+			}
+			if (details.styles) {
+				this.setStyles(details);
+			}
+			if (details.label) {
+				this.node.label = details.label;
+			}
+			if (details.id) {
+				this.node.label = details.id;
+			}
+
+			options.forEach(option => {
+				if (option) {
+					const node = document.createElement('option');
+
+					if (typeof option === 'string') {
+						node.setAttribute('value',option);
+						node.innerHTML = option
+					} else if (typeof option === 'object') {
+						node.innerHTML = option.name || option.innerHTML || '';
+						node.setAttribute('value',option.value || '');
+					}
+					self.node.appendChild(node);
+				}
+			});
+			return this;
+		},
+
+		/**
+		 * @param {string|HTMLElement} selector
+		 * @returns {Helper}
+		 */
+		select(selector) {
+			if (selector) {
+				const self = this;
+
+				if ( typeof selector === 'string' ) {
+					self.node = document.querySelector(selector);
+				} else if ( selector instanceof HTMLElement ) {
+					self.node = selector;
+				}
+			}
+			return this;
+		},
+
+		/**
+		 *
+		 * @param {InputForm[]} inputs
+		 * @param {Object} details
+		 * @param details.title
+		 * @param details.action
+		 * @param details.method
+		 * @param details.target
+		 * @param details.className
+		 * @param details.classList
+		 * @param details.styles
+		 * @returns {Helper}
+		 */
+		createForm(inputs,details) {
+			if (!inputs) {
+				inputs = [];
+			}
+
+			if ( !details ) {
+				details = {};
+			}
+			if(!inputs || typeof details !== 'object') {
+				throw 'Error: Invalid type';
+			}
+
+			this.node = document.createElement('form');
+			const self = this;
+
+			if (details.className) {
+				this.addClass(details.className);
+			}
+			if (details.classList) {
+				this.addClass(details.classList)
+			}
+			if (details.styles) {
+				this.setStyles(details);
+			}
+
+			const createInput = input => {
+				if (input) {
+					if (input instanceof HTMLElement) {
+						if (input.label) {
+							const label = document.createElement('label');
+							if (input.id) {
+								label.setAttribute('for',input.id);
+							}
+							label.innerHTML = input.label;
+							self.node.appendChild(label);
+						}
+						self.node.appendChild(input);
+					} else if (typeof input === 'object') {
+
+						const node = document.createElement('input');
+						node.setAttribute('type',input.type || 'text');
+						if (input.value) {
+							node.setAttribute('value',input.value);
+						}
+						if (typeof input.checked === 'boolean') {
+							node.setAttribute('value',input.checked);
+						}
+						if (input.placeholder) {
+							node.setAttribute('value',input.placeholder);
+						}
+						if (input.name) {
+							node.setAttribute('value',input.name);
+						}
+						if (input.innerHTML) {
+							node.innerHTML = input.innerHTML;
+						}
+						if (input.className) {
+							node.className = input.className;
+						}
+						if (input.id) {
+							node.id = input.id;
+						}
+						if (input.label) {
+							const label = document.createElement('label');
+							if (input.id) {
+								label.setAttribute('for',input.id);
+							}
+							label.innerHTML = input.label;
+							self.node.appendChild(label);
+						}
+						self.node.appendChild(node);
+					}
+				}
+			};
+
+			if (details.title) {
+				const title = document.createElement('h3');
+				title.classList.add('title');
+				title.innerHTML = details.title;
+				this.node.appendChild(title);
+			}
+			if (Array.isArray(inputs)) {
+				inputs.forEach(createInput);
+			} else if(typeof inputs === 'object'){
+				const inputList = Object.keys(inputs);
+				inputList.forEach(id => {
+					inputs[id].id = id;
+					createInput(inputs[id]);
+				})
+			} else {
+				console.warn('Invalid input');
+			}
+
+			if (details.action) {
+				this.node.setAttribute('action',details.action);
+			}
+			if (details.method) {
+				this.node.setAttribute('method',details.method);
+			}
+			if (details.target) {
+				this.node.setAttribute('target',details.target);
+			}
+
+			return this;
+		}
 	},
 	callList: {},
 	/**
