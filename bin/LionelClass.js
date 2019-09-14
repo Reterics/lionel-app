@@ -4,10 +4,21 @@ const { publicFolder } = require('../constants');
 const FM = require('./fileManager.js').FM;
 const path = require('path');
 
+/**
+ * This function look for a javascript file in the /app/public/js and the /app/public/ folder with the
+ * specified name, and returns the content of the file
+ * @param {string} name
+ * @returns {string|*|string}
+ */
 const getLib = (name) => {
-	const place = path.resolve(__dirname,'..'+FM.separator+'app'+FM.separator+'public'+FM.separator+'js'+FM.separator+name+'.js');
-	if (FM.fileExistsSync(place)) {
-		return place;
+	const publicFolder = '.'+FM.separator+'app'+FM.separator+'public'+FM.separator;
+	const publicJS = path.resolve(publicFolder + 'js' + FM.separator + name + '.js');
+	const publicGlobal = path.resolve(publicFolder + name + '.js');
+
+	if (FM.fileExistsSync(publicJS)) {
+		return FM.read(publicJS);
+	} else if (FM.fileExistsSync(publicGlobal)) {
+		return FM.read(publicGlobal);
 	} else if (FM.fileExistsSync(publicFolder + 'js' + FM.separator + name + '.js')) {
 		return FM.read(publicFolder + 'js' + FM.separator + name + '.js');
 	} else {
