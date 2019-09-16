@@ -1,6 +1,6 @@
 GNU General Public License (GNU GPL)
 
-Copyright (C) 2016 Attila Reterics - GNU GPL
+Copyright (C) 2018-2019 Attila Reterics - GNU GPL
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 @package    ReadAty/lionel-app
 @author     Attila Reterics
 @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
-@copyright  (C) 2016 Attila Reterics, reterics.attila@gmail.com
+@copyright  (C) 2018-2019 Attila Reterics, reterics.attila@gmail.com
 
 ----------------------------------------------------------------
 The license is applies to all code in Lionel-App that is not
