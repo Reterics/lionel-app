@@ -28,27 +28,15 @@ const FM = require('./fileManager.js').FM;
 const path = require('path');
 const { commonJSBundler } = require('lionel-commonjs-bundler');
 
+/**
+ * @type TemplateManager
+ */
 class TemplateManagerBaseCore {
 	constructor (options) {
 		const time = new Date().getTime(); // for benchmark
 		if (!options) options = {};
 		this._templates = {};
-		this.loadedBuffer = {};
 		this.globalJS = null;
-		this._regexps = {
-			load: {
-				parent: /(const)+\s*({[\w_,\n\s]*}|[\w_\n\s]*)\s*=\s*require\(['"][\w_./-]+['"]\)[.\w]*;*/g,
-				address: /['"][\w_./-]+['"]/g,
-				variable: /(const)+\s*[\w_{,}\n\s]*\s*=\s*/g,
-
-			},
-			save: {
-				// eslint-disable-next-line no-useless-escape
-				parent: /module\.exports\s*=\s*{?[\w.:_(){}\n'"\s,;\-]*}?;/g,
-				content: /[:'"]/g,
-				variable: /[module.]*exports\s*=\s*/g
-			}
-		};
 		this._templateEngineRegExp = {
 			init: null,
 			start: new RegExp('<template\\s+name=[\'"][\\w_]+[\'"]>'),
@@ -57,7 +45,6 @@ class TemplateManagerBaseCore {
 			end: '</template>',
 		};
 		this._importedData = {};
-		this._loadCache = {};
 		this._debugMode = typeof options.debug !== 'undefined' ? options.debug : false;
 		this._lastUpdated = 0;
 		this.htmlFormat = '.html';
@@ -111,11 +98,7 @@ class TemplateManagerBaseCore {
 	/**
      * This function renders the template {html:'HTML Code of page', onRendered:'JS code of page'}
      *
-     *
-     * @param {string} name
-     * @param {Object} parameters: usually {}
-     * @param {object|undefined} res
-     * @return {*}
+     * @type renderTemplate
      */
 	renderTemplate (name, parameters, res) {
 		const self = this;
@@ -313,98 +296,6 @@ class TemplateManagerBaseCore {
 	}
 
 	/**
-     * This function loads the file for the require('lalala/hahaha.js')
-     * returns the content of the file
-     * @param {String} name
-     * @param {String} address
-     * @param {Boolean} rules - Use regexp rules or not?
-     * @returns {string}
-     * @private
-     */
-	_loadRequiredFile (name, address, rules) {
-		const self = this;
-		const readCached = function (address) {
-			if (self._loadCache[address]) {
-				return self._loadCache[address];
-			}
-
-			if (FM.fileExists(address)) {
-				self._loadCache[address] = fs.readFileSync(address).toString();
-				return self._loadCache[address];
-			} else {
-				if (address.includes('/globals.js')) {
-					return '//Globals loaded';
-				}
-				return '//Load Failed> ' + address + '\n';
-			}
-		};
-		let html;
-		if (this._importedData[name]) {
-			const nam = this._importedData[name] + FM.separator + name;
-			html = this._loadCache[nam] = fs.readFileSync(nam).toString();
-		} else {
-			html = readCached(address);
-		}
-
-		return rules
-		/* Content cannot be in variable anymore */
-			? html.replace(self._regexps.save.parent, '')
-			: html;
-	}
-
-	/**
-     * This collect every required files for the current loaded file. Basically make one file from more... according require('')-s
-     * @param {String} rawJavascript
-     * @param {Boolean} isGlobal        - Is this the global LionelAPI.js file or not?
-     * @returns {*}
-     * @private
-     */
-	_fileUnification (rawJavascript, isGlobal) {
-		const self = this;
-		const rules = this._regexps.load; // You can check this line on the top
-
-		const replaceRequires = function (html) {
-			/**
-             * Replace every line with require with the content of file what the line points for
-             * const something = require('lalala/hahaha.js');
-             */
-			return html.replace(rules.parent, function (requireImportLine) {
-				/**
-                 * Determine the address of function source
-                 * 'lalala/hahaha.js'
-                 * @type {string}
-                 */
-				let address = '';
-				requireImportLine.replace(rules.address, function (d) {
-					address = d.substring(1, d.length - 1);
-					return '';
-				});
-				if (address.indexOf('.js') === -1) {
-					address += '.js';
-				}
-
-				const name = address.substring(address.lastIndexOf('/') + 1);
-				if (name === '' || self.globalStorage[name] || self.loadedBuffer[name]) {
-					return '';
-				}
-
-				if (isGlobal) {
-					self.globalStorage[name] = true;
-				}
-
-				self.loadedBuffer[name] = true;
-
-				/**
-                 * read the file content and replaces the line!
-                 */
-				return replaceRequires('\n' + self._loadRequiredFile.call(self, name, address, true));
-			});
-		};
-
-		return replaceRequires(rawJavascript);
-	}
-
-	/**
      * We set that Javascript file what contains every global variable:
      * Global variables and javascript codes are always loaded to the webPage
      * @param path
@@ -419,14 +310,27 @@ class TemplateManagerBaseCore {
      * Load Global variables, what we initially send to the Application (LionelAPI.js)
      */
 	loadGlobalJS () {
-		this.globalStorage = {}; // Global Variable Loaded Cache
-		this.loadedBuffer = {}; // Currently Loaded Cache
-		this._loadCache = {}; // JS Files in memory, Must be wiped after done
+		this.globalStorage = []; // Global Variable Loaded Cache
 
 		const globalJavascript = this.globalJS ? fs.readFileSync(this.globalJS).toString() : '';
-		this._templates.__globals = {
-			onRendered: this.globalJS ? globalJavascript.replace('module.exports = { LionelClient };', '') : ''
-		};
+
+		const loader = 'if ( typeof window.require !== "function" ) { window.require = function(path){return window._modules[path] || {}}; }' +
+			'if ( !window._modules ) { window._modules = {}; }';
+
+		if (typeof this.globalJS === 'string') {
+			const modulePath = path.resolve(this.globalJS).replace('globals.js','globals');
+			const loadToGlobal = 'const { LionelClient } = window.require("'+modulePath+'");';
+
+			this.globalStorage.push(modulePath);
+			this.globalStorage.push(modulePath+'.js');
+			const assignToJS  = 'window._modules["'+modulePath+'.js"] = window._modules["'+modulePath+'"]';
+			this._templates.__globals = {
+				onRendered: loader + commonJSBundler.packInBundle(modulePath,globalJavascript) +  loadToGlobal + assignToJS
+			};
+		} else {
+			this._templates.__globals = { onRendered:  '' };
+		}
+
 	}
 
 	/**
@@ -460,8 +364,15 @@ class TemplateManagerBaseCore {
 			console.warn('Controller folder doesnt exists.');
 			return 0;
 		}
-		const controllerFilesUnprocessed = FM.fileListRecursive(controllerDir, { type: 'long' }).filter(f => f.includes('.js'));
+		const controllerFilesUnprocessed = FM.fileListRecursive(controllerDir, { type: 'long' }).filter(f => f.includes('.js')).sort(function (a) {
+			if (a === '__html') {
+				return -1;
+			} else {
+				return 1
+			}
+		});
 
+		const self = this;
 		for (let i = 0; i < controllerFilesUnprocessed.length; i++) {
 			const file = controllerFilesUnprocessed[i].toString();
 			const pos = file.lastIndexOf(FM.separator);
@@ -472,19 +383,28 @@ class TemplateManagerBaseCore {
 
 			const html = fs.readFileSync(file).toString();
 
-			this.loadedBuffer = {};
-
 			const isGlobal = name === '__html';
 
-			this._templates[name].onRendered = commonJSBundler.makeCode(html, controllerDir, {
-				loadedFiles: isGlobal ? this.globalStorage : {},
-				loadedCache: isGlobal ? {} : this.globalStorage
-			}); // this._fileUnification.call(this, html, name === '__html');
+			let cacheFormat = {};
+			if (Array.isArray(this.globalStorage) && this.globalStorage.length){
+				this.globalStorage.forEach(function (line) {
+					cacheFormat[line] = '_';
+				})
+			}
 
-			this.loadedBuffer = {};
+			const options = {
+				loadedFiles: [],
+				loadedCache: cacheFormat
+			};
+
+			this._templates[name].onRendered = commonJSBundler.makeCode(html, controllerDir, options);
+
+			if (isGlobal && Array.isArray(options.loadedFiles) && options.loadedFiles.length) {
+				options.loadedFiles.forEach(function (file) {
+					self.globalStorage.push(file);
+				})
+			}
 		}
-
-		this._loadCache = {}; // Probably we move this out
 		this._lastUpdated = new Date().getTime();
 		return controllerFilesUnprocessed.length;
 	}
@@ -500,7 +420,6 @@ class TemplateManagerBaseCore {
 
 		const html = fs.readFileSync(file).toString();
 
-		this.loadedBuffer = {};
 		const isGlobal = name === '__html';
 
 		this._templates[name].onRendered = commonJSBundler.makeCode(html, address.substring(0,address.lastIndexOf('/') + 1), {
@@ -509,8 +428,6 @@ class TemplateManagerBaseCore {
 		});
 
 		// this._templates[name].onRendered = this._fileUnification.call(this, html, name === '__html');
-		console.log(this._templates[name].onRendered);
-		this.loadedBuffer = {};
 		if (this._debugMode === true) console.log('Loaded ' + file + ' Template OnRendered Data to Loader');
 	}
 }

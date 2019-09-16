@@ -98,3 +98,4 @@ Because of the Lionel App project is not done, it means i will send more updates
     * A Core development guide
     * LioDB: A mini database designed for big amount of documents
     * Node JS Multicore and server management: Helps to your server to use more CPU and break the limits of Node JS
+    * Export webpage to Static HTML/PHP content for WebServers

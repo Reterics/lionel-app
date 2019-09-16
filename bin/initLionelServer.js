@@ -207,8 +207,10 @@ const initLionelServer = function (port, options) {
 		debug: options.debug
 	});
 
-	if (FM.fileExistsSync('../app/routes')) {
-		require('../app/routes');
+	const path = require('path');
+	const routes = path.resolve(__dirname,'../app/routes.js');
+	if (FM.fileExistsSync(routes)) {
+		require(routes);
 	}
 	console.log(Lionel && Lionel.templateManager ? 'Lionel object loaded...' : 'Unknown error in Lionel Object');
 

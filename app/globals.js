@@ -765,7 +765,7 @@ const LionelClient = {
      * Load pages/templates to Lionel
      *
      * 1. Get the template data from server {html:'HTML Code of page', onRendered:'JS code of page'}
-     * 2. Put HTML into <div class="LionelPageContent"></div> with LionelClient._renderPage
+     * 2. Put HTML into < div class='LionelPageContent' ></div> with LionelClient._renderPage
      * 3. Checks that there is a <script> for this template or not.
      *      -Yes: just call function from that window._onRendered_(nameofTemplate)()
      *      -No:  Put into a <script> and append to body, after that will call!
@@ -818,7 +818,7 @@ const LionelClient = {
 		});
 	},
 	/**
-     * 2. Put HTML into <div class="LionelPageContent"></div> with LionelClient._renderPage
+     * 2. Put HTML into < div class='LionelPageContent' ></div> with LionelClient._renderPage
      * 3. Checks that there is a <script> for this template or not.
      *      -Yes: just call function from that global._onRendered_(nameofTemplate)()
      *      -No:  Put into a <script> and append to body, after that will call!

@@ -26,6 +26,9 @@ const getLib = (name) => {
 	}
 };
 
+/**
+ * @typedef LionelObject
+ */
 const Lionel = {
 	templateManager: null,
 	_methods: {
@@ -68,6 +71,9 @@ const Lionel = {
 			this._innerMethods.startup = method;
 		}
 	},
+	/**
+	 * @type LionelRouter
+	 */
 	Router: {
 		routes: {},
 		resFolder: publicFolder,
