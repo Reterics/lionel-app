@@ -1,7 +1,7 @@
 'use strict';
 /**
  * Lionel-App: Template Manager
- * Copyright (C) 2016 Attila Reterics
+ * Copyright (C) 2018-2019 Attila Reterics
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    ReadAty/lionel-app
+ * @package    RedAty/lionel-app
  * @author     Attila Reterics
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2016 Attila Reterics, reterics.attila@gmail.com
+ * @copyright  (C) 2018-2019 Attila Reterics, reterics.attila@gmail.com
  *
  */
 

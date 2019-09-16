@@ -15,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-@package    ReadAty/lionel-app
+@package    RedAty/lionel-app
 @author     Attila Reterics
 @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
 @copyright  (C) 2018-2019 Attila Reterics, reterics.attila@gmail.com
