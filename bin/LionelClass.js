@@ -90,15 +90,16 @@ const Lionel = {
 			} else if (url.indexOf(':') !== -1) {
 				url = url.split(':')[0];
 			}
+			const self = this;
 			if (typeof callback === 'function' && url) {
-				this.routes[url] = callback;
+				self.routes[url] = callback;
 			} else if (typeof callback === 'string') {
-				this.routes[url] = function () {
-					this.render(callback);
+				self.routes[url] = function () {
+					self.render(callback);
 				};
 			} else if (!callback) {
-				this.routes[url] = function () {
-					this.render(url);
+				self.routes[url] = function () {
+					self.render(url);
 				};
 			}
 		},

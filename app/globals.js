@@ -735,6 +735,16 @@ const LionelClient = {
 			return this;
 		},
 
+		/**
+		 *
+		 * @param {Object} options
+		 * @param options.title
+		 * @param options.onclose
+		 * @param options.nodes
+		 * @param options.innerHTML
+		 * @param options.buttons
+		 * @returns {LionelClient}
+		 */
 		createWindow(options){
 			if (!options) {
 				options = {};
@@ -755,15 +765,24 @@ const LionelClient = {
 			const closeButton = document.createElement('button');
 			closeButton.classList.add('close');
 			closeButton.setAttribute('type','button');
+			closeButton.style.zIndex = "999";
 
 			const times = document.createElement('span');
 			times.setAttribute('aria-hidden','true');
 			times.innerHTML = '×';
 
-			closeButton.appendChild(times);
 			if (typeof options.onclose === 'function') {
-				options.onclose();
+				closeButton.onclick = function () {
+					self.node.outerHTML = '';
+					options.onclose();
+				};
+			} else if (options.onclose === 'destroy') {
+				const self = this;
+				closeButton.onclick = function () {
+					self.node.outerHTML = '';
+				};
 			}
+			closeButton.appendChild(times);
 
 			header.appendChild(title);
 			header.appendChild(closeButton);
@@ -799,7 +818,7 @@ const LionelClient = {
 					if (button && typeof button === 'object') {
 
 						if (typeof button.className === 'string') {
-							element.className += button.className;
+							element.className += ' '+button.className;
 						}
 						if (typeof button.onclick === 'function') {
 							element.onclick = button.onclick;
@@ -817,7 +836,68 @@ const LionelClient = {
 			}
 
 			return this;
-		}
+		},
+		/**
+		 *
+		 * @param {Object} options
+		 * @param options.title
+		 * @param options.nodes
+		 * @param options.innerHTML
+		 * @param options.buttons
+		 * @param options.apply
+		 * @param options.onclose
+		 * @returns {LionelClient}
+		 */
+		createPopup(options){
+			if (!options) {
+				options = {};
+			}
+
+			const background = document.createElement('div');
+			background.className = 'modal fade show';
+			background.style.display= 'block';
+			background.style.paddingRight= '17px';
+			background.style.background= '#8888888c';
+			background.setAttribute('role','dialog');
+
+			if (typeof options.onclose === 'function') {
+				const _onclose = options.onclose;
+				options.onclose = function () {
+					_onclose();
+					background.outerHTML = '';
+				}
+			} else {
+				options.onclose = function () {
+					background.outerHTML = '';
+				}
+			}
+			background.onclick = function (e) {
+				if( e && e.target instanceof HTMLElement){
+					if (e.target.className && e.target.className === 'modal fade show') {
+						options.onclose()
+
+					}else if (e.target.className === 'close' ||
+						( e.target.tagName.toUpperCase() === 'SPAN' && e.target.parentElement.className === 'close') ){
+						options.onclose()
+					}
+				}
+			};
+
+			const dialog = document.createElement('div');
+			dialog.className = 'modal-dialog';
+			dialog.setAttribute('role','document');
+
+			dialog.appendChild(this.createWindow(options).node);
+
+			background.appendChild(dialog);
+
+			if (options.apply instanceof HTMLElement) {
+				options.apply.appendChild(background);
+			} else {
+				document.body.appendChild(background);
+			}
+			return this;
+		},
 
 	},
 	callList: {},
