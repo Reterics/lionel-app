@@ -179,6 +179,7 @@ const serverSelfTest = function (Lionel, FM, options) {
  * @param {String} options.separator
  * @param {String} options.appData
  * @param {String} options.appName
+ * @param {String} options.phpExport
  * @param {Boolean} options.liveUpdate
  * @param {function|undefined|null} options.requestListener
  */
@@ -213,6 +214,16 @@ const initLionelServer = function (port, options) {
 		require(routes);
 	}
 	console.log(Lionel && Lionel.templateManager ? 'Lionel object loaded...' : 'Unknown error in Lionel Object');
+
+	if (options.phpExport) {
+		/**
+		 Experimental: Export webpage to Static HTML/PHP content for WebServers
+		 */
+		const { exportToHTML } = require('./staticExport');
+
+		exportToHTML('./htdocs/');
+		return;
+	}
 
 	if (options.liveUpdate) {
 		const { enableSTDIN } = require('./initLionelServer');

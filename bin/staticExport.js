@@ -13,6 +13,46 @@ const makeHTMLFile = function (route, html, folder) {
 	}
 };
 
+const getPHPRequestManager = function () {
+	const file = './requestManager.php';
+	if (fs.existsSync(file)){
+		return FM.read(file);
+	}
+	const resolved = path.resolve(file);
+	const resolvedWithDir = path.resolve(__dirname,file);
+
+	if(fs.existsSync(resolvedWithDir)){
+		return FM.read(resolvedWithDir);
+	} else if(fs.existsSync(resolved)) {
+		return FM.read(resolved);
+	} else {
+		return "<?php  echo 'LionelClient operations are not supported by this server';";
+	}
+};
+
+const setPHPGlobals = function () {
+	if (!Lionel.templateManager) {
+		console.error('TemplateManager is not defined');
+		return;
+	}
+	const file = '../app/phpGlobals.js';
+	if (fs.existsSync(file)){
+		Lionel.templateManager.setGlobalJS(file);
+		return Lionel.templateManager.loadGlobalJS();
+	}
+	const resolved = path.resolve(file);
+	const resolvedWithDir = path.resolve(__dirname,file);
+
+	if(fs.existsSync(resolvedWithDir)){
+		Lionel.templateManager.setGlobalJS(resolvedWithDir);
+		return Lionel.templateManager.loadGlobalJS();
+	} else if(fs.existsSync(resolved)) {
+		Lionel.templateManager.setGlobalJS(resolved);
+		return Lionel.templateManager.loadGlobalJS();
+	} else {
+		return "globals for PHP version is not found. This may cause stability problems...';";
+	}
+};
 
 const exportToHTML = function (folder) {
 
@@ -28,6 +68,7 @@ const exportToHTML = function (folder) {
 			return 1;
 		}
 	}
+	setPHPGlobals();
 	const TemplateManager = Lionel.templateManager;
 
 	const Router = Lionel.Router;
@@ -57,8 +98,11 @@ const exportToHTML = function (folder) {
 	fileList.forEach(function (publicFile) {
 		const publicPath = path.resolve(publicFolder,publicFile);
 		FM.copy(publicPath,folder);
-	})
+	});
 
+	FM.write(path.resolve(folder,'call.php'),getPHPRequestManager());
+	console.log('Your app exported to PHP to' + path.resolve(folder));
+	process.exit(0);
 };
 
 module.exports = {

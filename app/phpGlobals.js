@@ -19,9 +19,9 @@
  */
 const LionelClient = {
 	/**
-     * @param args
-     * @returns {*|Promise<any>}
-     */
+	 * @param args
+	 * @returns {*|Promise<any>}
+	 */
 	call: function (...args) {
 		let i = 1;
 		const isThereCallback =  typeof args[args.length - 1] === 'function';
@@ -44,7 +44,7 @@ const LionelClient = {
 
 		return this._xmlHTTPRequest({
 			callback: callback, // error result
-			url: '/call',
+			url: '/call.php',
 			method: 'POST',
 			'content-type': 'application/json',
 			functionName: functionName,
@@ -53,19 +53,19 @@ const LionelClient = {
 	},
 	/**
 	 * This function makes a Rest API Request to the server with the specific parameters to help server to recognize the client
-     * @param {Object} options
-     * @param {string} options.url
-     * @param {string} options.method
-     * @param {string} options.functionName
-     * @param {string[]} options.parameters
-     * @param {function|undefined} options.callback
-     * @returns {Promise<any>}
-     * @private
-     */
+	 * @param {Object} options
+	 * @param {string} options.url
+	 * @param {string} options.method
+	 * @param {string} options.functionName
+	 * @param {string[]} options.parameters
+	 * @param {function|undefined} options.callback
+	 * @returns {Promise<any>}
+	 * @private
+	 */
 	_xmlHTTPRequest: function (options) {
 		if (!options) options = {};
 		const xHTTP = new XMLHttpRequest();
-		const call = typeof options.url === 'string' ? options.url : '/call';
+		const call = typeof options.url === 'string' ? options.url : '/call.php';
 		const method = typeof options.method === 'string' ? options.method : 'POST';
 		const content = typeof options['content-type'] === 'string' ? options['content-type'] : 'application/json';
 
@@ -126,10 +126,10 @@ const LionelClient = {
 	/**
 	 * We can load external javascript libraries through this Javascript function.
 	 * This is a god async way the save network traffic
-     * @param {string} name
-     * @param {function|undefined} then
-     * @returns {Promise<any>}
-     */
+	 * @param {string} name
+	 * @param {function|undefined} then
+	 * @returns {Promise<any>}
+	 */
 	getPublicJS: function (name, then) {
 		if (Array.isArray(name)) {
 			name = name.join(';');
@@ -705,7 +705,7 @@ const LionelClient = {
 			};
 
 			if (details.title) {
-				const title = document.createElement('h5');
+				const title = document.createElement('h3');
 				title.classList.add('title');
 				title.innerHTML = details.title;
 				this.node.appendChild(title);
@@ -733,187 +733,42 @@ const LionelClient = {
 			}
 
 			return this;
-		},
-
-		createWindow(options){
-			if (!options) {
-				options = {};
-			}
-			this.node = document.createElement('div');
-			this.addClass('modal-content');
-			this.setStyles({
-				margin:'5px',
-				width:'auto'
-			});
-
-			const header = document.createElement('div');
-			header.classList.add('modal-header');
-
-			const title = document.createElement('h5');
-			title.innerHTML = options.title || '';
-
-			const closeButton = document.createElement('button');
-			closeButton.classList.add('close');
-			closeButton.setAttribute('type','button');
-
-			const times = document.createElement('span');
-			times.setAttribute('aria-hidden','true');
-			times.innerHTML = '×';
-
-			closeButton.appendChild(times);
-			if (typeof options.onclose === 'function') {
-				options.onclose();
-			}
-
-			header.appendChild(title);
-			header.appendChild(closeButton);
-
-			this.node.appendChild(header);
-
-			const content = document.createElement('div');
-			content.classList.add('modal-body');
-
-			const self = this;
-			if (Array.isArray(options.nodes)){
-				options.nodes.forEach(node => {
-					if (node instanceof HTMLElement) {
-						self.node.appendChild(node);
-					}
-				});
-			}
-			if (typeof options.innerHTML === 'string' || typeof options.innerHTML === 'number') {
-				self.node.innerHTML += options.innerHTML;
-			}
-
-			self.node.appendChild(content);
-
-			const footer = document.createElement('div');
-			footer.classList.add('modal-footer');
-
-			if (Array.isArray(options.buttons)) {
-				options.buttons.forEach(button => {
-					const element = document.createElement('button');
-					element.classList.add('btn');
-					element.setAttribute('type','button');
-
-					if (button && typeof button === 'object') {
-
-						if (typeof button.className === 'string') {
-							element.className += button.className;
-						}
-						if (typeof button.onclick === 'function') {
-							element.onclick = button.onclick;
-						}
-						if (typeof button.innerHTML === 'string') {
-							element.innerHTML = button.innerHTML;
-						}
-						if (typeof button.value === 'string') {
-							element.innerHTML = button.value;
-						}
-						footer.appendChild(element);
-					}
-				});
-				self.node.appendChild(footer);
-			}
-
-			return this;
 		}
-
 	},
 	callList: {},
 	/**
-     * You can use this function if you want to get HTML and JS data from a specific URL/file
-     * @param {String} name
-     * @returns {Promise<any>}
-     */
+	 * You can use this function if you want to get HTML and JS data from a specific URL/file
+	 * @param {String} name
+	 * @returns {Promise<any>}
+	 */
 	getPageContent: function (name) {
 		return new Promise((resolve, reject) => {
-			if (!name) {
-				resolve({});
-			}
-			if (name.indexOf('-') !== -1) {
-				name = name.toString().split('-')[0];
-			} else if (name.indexOf(':') !== -1) {
-				name = name.toString().split(':')[0];
-			}
-			name = name.replace('/', '');
-			LionelClient.call('__getRenderedTemplate', name, (error, result) => {
-				if (error) {
-					reject(new Error(error));
-				} else {
-					resolve(result);
-				}
-			});
+			reject(new Error('PHP version of Lionel-App doesnt support this operation: getPageContent'));
 		});
 	},
 	/**
-     * Load pages/templates to Lionel
-     *
-     * 1. Get the template data from server {html:'HTML Code of page', onRendered:'JS code of page'}
-     * 2. Put HTML into < div class='LionelPageContent' ></div> with LionelClient._renderPage
-     * 3. Checks that there is a <script> for this template or not.
-     *      -Yes: just call function from that window._onRendered_(nameofTemplate)()
-     *      -No:  Put into a <script> and append to body, after that will call!
-     *
-     * @param {String} name
-     * @param {string|undefined} parent
-     */
-	getPage: function (name, parent) {
-		this.clearAllIntervals();
-		const globals = Object.keys(this.globals);
-		const self = this;
-		globals.forEach(property => {
-			if (typeof self.globals[property].remove === 'function') {
-				self.globals[property].remove();
-			} else if (typeof this.globals[property].destroy === 'function') {
-				self.globals[property].destroy();
-			}
-			delete self.globals[property];
-		});
-		if (parent === undefined) parent = '.LionelPageContent';
-		if (name.indexOf('-') !== -1) {
-			name = name.toString().split('-')[0];
-		} else if (name.indexOf(':') !== -1) {
-			name = name.toString().split(':')[0];
+	 * Load pages/templates to Lionel
+	 * @param {String} name
+	 */
+	getPage: function (name) {
+		if (!name.endsWith('.php') && !name.endsWith('.html')  && name !== '/') {
+			window.location.href = "/" + name + '.html';
+		} else {
+			window.location.href = "/"+ name;
 		}
-		name = name.replace('/', '');
-		LionelClient.call('__getRenderedTemplate', name, function (error, result) {
-			if (!error) {
-				self._renderPage(name, parent, result);
-			} else {
-				if (result && result.details) {
-					result = { html: 'Error: ' + result.details.message + '<br> URL: ' + result.details.url + '<br>Please refresh the page if it doesnt happen automatically.' };
-					self._renderPage(name, parent, result);
-					setTimeout(function () {
-						location.reload();
-					}, 5000);
-				} else if (result && result.message) {
-					result = { html: 'Error: ' + result.message + '<br> URL: ' + result.url + '<br>Please refresh the page if it doesnt happen automatically.' };
-					self._renderPage(name, parent, result);
-					setTimeout(function () {
-						location.reload();
-					}, 5000);
-					// }else {
-				}
-			}
-		}).catch(function (e) {
-			if (e.url === '__getRenderedTemplate') {
-				console.error('Session has no longer active or the server is down');
-			}
-		});
 	},
 	/**
-     * 2. Put HTML into < div class='LionelPageContent' ></div> with LionelClient._renderPage
-     * 3. Checks that there is a <script> for this template or not.
-     *      -Yes: just call function from that global._onRendered_(nameofTemplate)()
-     *      -No:  Put into a <script> and append to body, after that will call!
-     *
-     * Handles some error from the server, but not too much
-     * @param {String} name      - Name of template
-     * @param {String} parent    - This usually .LionelPageContent
-     * @param {Object} result    - {html:'HTML Code of page', onRendered:'JS code of page'}
-     * @private
-     */
+	 * 2. Put HTML into < div class='LionelPageContent' ></div> with LionelClient._renderPage
+	 * 3. Checks that there is a <script> for this template or not.
+	 *      -Yes: just call function from that global._onRendered_(nameofTemplate)()
+	 *      -No:  Put into a <script> and append to body, after that will call!
+	 *
+	 * Handles some error from the server, but not too much
+	 * @param {String} name      - Name of template
+	 * @param {String} parent    - This usually .LionelPageContent
+	 * @param {Object} result    - {html:'HTML Code of page', onRendered:'JS code of page'}
+	 * @private
+	 */
 	_renderPage: function (name, parent, result) {
 		if (document.querySelector('#__render_' + name) !== null) {
 			document.querySelector('#__render_' + name).outerHTML = '';
@@ -967,20 +822,13 @@ const LionelClient = {
 	/**
 	 * This is an inner navigation call. You can navigate to an another page without refreshing the browser.
 	 * No need to download some external files and globals, so it saves network traffic
-     * @param href
-     */
+	 * @param href
+	 */
 	navigate: function (href) {
-		if (href.charAt(0) === '/') {
-			href = href.substring(1);
-		}
-
-		window.history.pushState({}, href, href); // TODO - navigating to links including colon (:) causes NS_ERROR_FAILURE
-
-		href = href.replace('#', '');
-		if (href === '') {
-			LionelClient.getPage('index');
+		if (!href.endsWith('.php') && !href.endsWith('.html') && href !== '/') {
+			window.location.href = href+'.html';
 		} else {
-			LionelClient.getPage(href.toString());
+			window.location.href = href;
 		}
 	},
 	/**
@@ -1035,9 +883,9 @@ const LionelClient = {
 		return clearInterval(f);
 	},
 	/**
-     * @param {String} cookieName
-     * @param {String} cookieValue
-     */
+	 * @param {String} cookieName
+	 * @param {String} cookieValue
+	 */
 	setCookie: function (cookieName, cookieValue) {
 		const exdays = 1;
 		const d = new Date();
@@ -1046,9 +894,9 @@ const LionelClient = {
 		document.cookie = cookieName + '=' + cookieValue + ';' + expires + ';path=/';
 	},
 	/**
-     * @param {String} cookieName
-     * @returns {string}
-     */
+	 * @param {String} cookieName
+	 * @returns {string}
+	 */
 	getCookie: function (cookieName) {
 		const name = cookieName + '=';
 		const decodedCookie = decodeURIComponent(document.cookie);

@@ -24,11 +24,3 @@ initLionelServer(port,{
  * Initialize backend
  **/
 require('./app/server/main');
-
-/**
-Experimental: Export webpage to Static HTML/PHP content for WebServers
-
-const { exportToHTML } = require('./bin/staticExport');
-
-exportToHTML('./htdocs/');
-*/

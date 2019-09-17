@@ -318,7 +318,9 @@ class TemplateManagerBaseCore {
 			'if ( !window._modules ) { window._modules = {}; }';
 
 		if (typeof this.globalJS === 'string') {
-			const modulePath = path.resolve(this.globalJS).replace('globals.js','globals');
+			const modulePath = path.resolve(this.globalJS)
+				.replace('lobals.js','lobals')
+				.replace('phpG','g');
 			const loadToGlobal = 'const { LionelClient } = window.require("'+modulePath+'");';
 
 			this.globalStorage.push(modulePath);
