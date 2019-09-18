@@ -18,8 +18,18 @@ const serverStatic = function (publicFolder) {
 		if (FM.fileExistsSync(filePath) && filePath.includes('.')) {
 			console.log('File found: ' + filePath);
 			const contentType = checkFile(filePath) || 'text/plain';
-			res.setHeader('Content-Type', contentType);
-			res.send(FM.read(filePath)); // This is a blocking operation, should i change?
+
+			const fs = require('fs');
+			const stream = fs.createReadStream(filePath);
+			stream.on('open', function () {
+				res.setHeader('Content-Type', contentType);
+				stream.pipe(res);
+			});
+			stream.on('error', function () {
+				res.setHeader('Content-Type', 'text/plain');
+				res.statusCode = 404;
+				res.end('Not found');
+			});
 			return;
 		}
 		return next();

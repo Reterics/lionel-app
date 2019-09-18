@@ -899,6 +899,119 @@ const LionelClient = {
 			return this;
 		},
 
+		createNavHeader(options) {
+			if (!options) {
+				options = {};
+			}
+			const nav = document.createElement('nav');
+			nav.classList.add('navbar');
+			nav.classList.add('navbar-expand-lg');
+			if (options.vertical) {
+				nav.classList.add('flex-column');
+			}
+
+			if (options.colorScheme === 'dark') {
+				nav.classList.add('navbar-dark');
+				nav.classList.add('bg-dark');
+			} else {
+				nav.classList.add('navbar-light');
+				nav.classList.add('bg-light');
+
+			}
+			if (options.background) {
+				nav.style.backgroundColor = options.background;
+			}
+			const brand = document.createElement('a');
+			brand.classList.add('navbar-brand');
+			brand.href = '#';
+			if (options.icon) {
+				const img = document.createElement('img');
+				img.src = options.icon;
+				img.width = 30;
+				img.height = 30;
+				if (options.title) {
+					img.classList.add('d-inline-block');
+					img.classList.add('align-top');
+					brand.appendChild(img);
+					brand.innerHTML += ' ' + options.title;
+				} else {
+					brand.appendChild(img);
+				}
+				nav.appendChild(brand);
+			} else if (options.title) {
+				brand.innerHTML += options.title;
+				nav.appendChild(brand);
+			}
+
+
+			const navbar = document.createElement('div');
+			if (!options.vertical) {
+
+				const customInnerId = 'nav'+new Date().getTime();
+				navbar.classList.add('collapse');
+				navbar.classList.add('navbar-collapse');
+				navbar.id = customInnerId;
+
+				const toggleButton = document.createElement('button');
+				toggleButton.className = 'navbar-toggler';
+				toggleButton.setAttribute('tyoe','button');
+				toggleButton.setAttribute('data-toggle','collapse');
+				toggleButton.setAttribute('data-target','#'+customInnerId);
+				toggleButton.setAttribute('aria-controls','navbarSupportedContent');
+				toggleButton.setAttribute('aria-expanded','false');
+				toggleButton.setAttribute('aria-label','Toggle navigatiopn');
+
+				toggleButton.innerHTML = '<span class="navbar-toggler-icon"></span>';
+
+				nav.appendChild(toggleButton);
+			}
+
+			this.createNavigation(options);
+			const navigation = this.node;
+			navbar.appendChild(navigation);
+			nav.appendChild(navbar);
+			this.node = nav;
+
+			return this;
+		},
+
+		createNavigation(options) {
+			if (!options) {
+				options = {};
+			}
+			this.node = document.createElement('ul');
+			this.addClass(options.vertical ? 'navbar-nav flex-column' : 'navbar-nav mr-auto');
+			if (Array.isArray(options.items)) {
+				options.items.forEach((item, index) => {
+					if (item) {
+						const li = document.createElement('li');
+						li.classList.add('nav-item');
+						const a = document.createElement('a');
+						a.classList.add('nav-link');
+						if (typeof item === 'string') {
+							//a.setAttribute('href','');
+							a.innerHTML = item;
+							const pathName = location.pathname;
+							if ( (pathName.startsWith('/') && pathName.substring(1) === item)
+							 || (pathName === '/' && !index) ) {
+								li.classList.add('active');
+							}
+							a.onclick = function () {
+								console.log(item);
+								LionelClient.navigate('/'+item);
+							}
+						} else if(typeof item === 'object') {
+							a.setAttribute('href',item.href);
+							a.innerHTML = item.innerHTML;
+						}
+						li.appendChild(a);
+						this.node.appendChild(li);
+					}
+				});
+			}
+			return this;
+		}
+
 	},
 	callList: {},
 	/**
@@ -940,16 +1053,7 @@ const LionelClient = {
      */
 	getPage: function (name, parent) {
 		this.clearAllIntervals();
-		const globals = Object.keys(this.globals);
 		const self = this;
-		globals.forEach(property => {
-			if (typeof self.globals[property].remove === 'function') {
-				self.globals[property].remove();
-			} else if (typeof this.globals[property].destroy === 'function') {
-				self.globals[property].destroy();
-			}
-			delete self.globals[property];
-		});
 		if (parent === undefined) parent = '.LionelPageContent';
 		if (name.indexOf('-') !== -1) {
 			name = name.toString().split('-')[0];
