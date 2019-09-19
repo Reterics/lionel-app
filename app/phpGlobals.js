@@ -24,14 +24,14 @@ const LionelClient = {
 	 */
 	call: function (...args) {
 		let i = 1;
-		const isThereCallback =  typeof args[args.length - 1] === 'function';
+		const isThereCallback = typeof args[args.length - 1] === 'function';
 		const lastArgument = isThereCallback ? args.length - 1 : args.length;
 		if (args.length === 0 || typeof args[0] !== 'string') {
 			if (isThereCallback) {
 				args[0](true, 'At least one parameters are needed for call');
 			}
 			return new Promise((resolve, reject) => {
-				reject(new Error( 'At least one parameters are needed for call'));
+				reject(new Error('At least one parameters are needed for call'));
 			});
 		}
 		const functionName = args[0];
@@ -233,21 +233,21 @@ const LionelClient = {
 		 * @param {string|string[]} className
 		 * @returns {Helper}
 		 */
-		addClass(className){
+		addClass (className) {
 			const self = this;
 			if (className && self.node instanceof HTMLElement) {
 				if (typeof className === 'string') {
 					className.split(' ').forEach(className => {
-						if( className ) {
+						if (className) {
 							self.node.classList.add(className);
 						}
-					})
-				} else if(Array.isArray(className)){
+					});
+				} else if (Array.isArray(className)) {
 					className.forEach(string => {
-						if(typeof string === 'string' && string){
+						if (typeof string === 'string' && string) {
 							self.node.classList.add(string);
 						}
-					})
+					});
 				}
 			}
 			return this;
@@ -257,29 +257,28 @@ const LionelClient = {
 		 * @param {Object} styles
 		 * @returns {Helper}
 		 */
-		setStyles(styles) {
+		setStyles (styles) {
 			if (styles && typeof styles === 'object' && self.node instanceof HTMLElement) {
 				const keys = Object.keys(styles);
 
 				keys.forEach(key => {
-					if( key && typeof key === 'string') {
-
+					if (key && typeof key === 'string') {
 						const parts = key.split('-');
 
 						if (parts.length === 1) {
 							self.node.style[key] = styles[key];
 						} else {
 							let formattedStyleName = '';
-							parts.forEach((part,index) => {
-								if (part){
+							parts.forEach((part, index) => {
+								if (part) {
 									if (index) {
 										formattedStyleName += part.charAt(0) + part.substring(1);
 									} else {
 										formattedStyleName += part;
 									}
 								}
-
-							})
+							});
+							self.node.style[formattedStyleName] = styles[key];
 						}
 					}
 				});
@@ -287,14 +286,12 @@ const LionelClient = {
 			return this;
 		},
 
-		append(...nodes) {
+		append (...nodes) {
 			if (this.node instanceof HTMLElement) {
-
 				for (let i = 0; i < nodes.length; i++) {
-
-					if(nodes[i] instanceof HTMLElement){
+					if (nodes[i] instanceof HTMLElement) {
 						this.node.appendChild(nodes[i]);
-					} else if (typeof nodes[i] === 'object' && nodes[i].node instanceof HTMLElement){
+					} else if (typeof nodes[i] === 'object' && nodes[i].node instanceof HTMLElement) {
 						this.node.appendChild(nodes[i].node);
 					}
 				}
@@ -306,13 +303,13 @@ const LionelClient = {
 		 * @param {Object} attributes
 		 * @returns {Helper}
 		 */
-		setAttributes(attributes) {
+		setAttributes (attributes) {
 			if (this.node instanceof HTMLElement && attributes && typeof attributes === 'object') {
 				const keys = Object.keys(attributes);
 				const self = this;
 
 				keys.forEach(key => {
-					self.node.setAttribute(key,attributes[key]);
+					self.node.setAttribute(key, attributes[key]);
 				});
 			}
 			return this;
@@ -323,10 +320,10 @@ const LionelClient = {
 		 * @param {function} method
 		 * @returns {Helper}
 		 */
-		on(eventName, method) {
-			if (this.node instanceof HTMLElement && eventName
-				&& typeof eventName === 'string' && typeof method === 'function') {
-				this.node['on'+eventName] = method;
+		on (eventName, method) {
+			if (this.node instanceof HTMLElement && eventName &&
+				typeof eventName === 'string' && typeof method === 'function') {
+				this.node['on' + eventName] = method;
 			}
 			return this;
 		},
@@ -336,9 +333,9 @@ const LionelClient = {
 		 * @param {string} data
 		 * @returns {Helper}
 		 */
-		setData(name,data) {
-			if (this.node instanceof HTMLElement && name && typeof name === 'string' && data ) {
-				this.node.setAttribute('data-'+name,data);
+		setData (name, data) {
+			if (this.node instanceof HTMLElement && name && typeof name === 'string' && data) {
+				this.node.setAttribute('data-' + name, data);
 			}
 			return this;
 		},
@@ -347,9 +344,9 @@ const LionelClient = {
 		 * @param {string} name
 		 * @returns {Helper}
 		 */
-		removeData(name) {
-			if (this.node instanceof HTMLElement && name && typeof name === 'string' ) {
-				this.node.removeAttribute('data-'+name);
+		removeData (name) {
+			if (this.node instanceof HTMLElement && name && typeof name === 'string') {
+				this.node.removeAttribute('data-' + name);
 			}
 			return this;
 		},
@@ -358,20 +355,20 @@ const LionelClient = {
 		 * @param {string} name
 		 * @returns {string|null}
 		 */
-		getData(name) {
+		getData (name) {
 			if (this.node instanceof HTMLElement && name && typeof name === 'string') {
 				return this.node.getAttribute(name);
 			}
 			return null;
 		},
 
-		getAllData() {
+		getAllData () {
 			const attributes = this.attributes;
 			const length = attributes.length;
 			const result = [];
 			for (let i = 0; i < length; i++) {
 				result.push({
-					name:attributes[i].name,
+					name: attributes[i].name,
 					value: attributes[i].value
 				});
 			}
@@ -392,15 +389,17 @@ const LionelClient = {
 		 * @param details.checked
 		 * @returns {Helper}
 		 */
-		createElement(type,details) {
-			if ( !type ) {
-				type = 'div'
+		createElement (type, details) {
+			if (!type) {
+				type = 'div';
 			}
-			if ( !details ) {
+			if (!details) {
 				details = {};
 			}
 			if (typeof type !== 'string' || typeof details !== 'object') {
-				throw 'Error: Invalid type';
+				console.error('Invalid type/details');
+				this.node = null;
+				return this;
 			}
 			this.node = document.createElement(type);
 			const self = this;
@@ -409,7 +408,7 @@ const LionelClient = {
 				this.addClass(details.className);
 			}
 			if (details.classList) {
-				this.addClass(details.classList)
+				this.addClass(details.classList);
 			}
 			if (details.styles) {
 				this.setStyles(details);
@@ -421,7 +420,7 @@ const LionelClient = {
 				this.node.innerHTML = details.innerText;
 			}
 			if (details.innerElement instanceof HTMLElement) {
-				this.node.appendChild(details.innerElement)
+				this.node.appendChild(details.innerElement);
 			}
 			if (Array.isArray(details.innerElements)) {
 				details.innerElements.forEach(element => {
@@ -450,16 +449,18 @@ const LionelClient = {
 		 * @param details.events
 		 * @returns {Helper}
 		 */
-		createTable(lineArray,details) {
+		createTable (lineArray, details) {
 			if (!lineArray) {
 				lineArray = [];
 			}
 
-			if ( !details ) {
+			if (!details) {
 				details = {};
 			}
-			if(!Array.isArray(lineArray) || typeof details !== 'object') {
-				throw 'Error: Invalid type';
+			if (!Array.isArray(lineArray) || typeof details !== 'object') {
+				console.error('Invalid type/details');
+				this.node = null;
+				return this;
 			}
 
 			this.node = document.createElement('table');
@@ -468,7 +469,7 @@ const LionelClient = {
 				this.addClass(details.className);
 			}
 			if (details.classList) {
-				this.addClass(details.classList)
+				this.addClass(details.classList);
 			}
 			if (details.styles) {
 				this.setStyles(details);
@@ -480,13 +481,13 @@ const LionelClient = {
 				if (Array.isArray(columns)) {
 					columns.forEach(column => {
 						const tableElement = document.createElement(type);
-						if (typeof column === 'string' || typeof column === 'number'){
-							tableElement.innerHTML = column
+						if (typeof column === 'string' || typeof column === 'number') {
+							tableElement.innerHTML = column;
 						} else if (typeof column === 'function') {
 							const functionResult = column();
 
 							if (functionResult instanceof HTMLElement) {
-								tableElement.appendChild(functionResult)
+								tableElement.appendChild(functionResult);
 							} else if (functionResult) {
 								tableElement.innerHTML = functionResult;
 							}
@@ -495,11 +496,11 @@ const LionelClient = {
 						} else if (column && typeof column === 'object') {
 							try {
 								tableElement.innerHTML = JSON.stringify(column);
-							} catch ( e ) {
+							} catch (e) {
 								console.warn(e);
 							}
 						} else {
-							console.warn('Invalid column data')
+							console.warn('Invalid column data');
 						}
 
 						tr.appendChild(tableElement);
@@ -514,10 +515,10 @@ const LionelClient = {
 								if (typeof ev.preventDefault === 'function') {
 									ev.preventDefault();
 								}
-								details.events[event](columns,ev);
-							}
+								details.events[event](columns, ev);
+							};
 						}
-					})
+					});
 				}
 
 				return tr;
@@ -525,7 +526,7 @@ const LionelClient = {
 
 			const thead = document.createElement('thead');
 			if (Array.isArray(details.header)) {
-				thead.appendChild(getTableLine(details.header,'th'));
+				thead.appendChild(getTableLine(details.header, 'th'));
 			}
 			this.node.appendChild(thead);
 			const tbody = document.createElement('tbody');
@@ -552,16 +553,18 @@ const LionelClient = {
 		 * @param details.id
 		 * @returns {Helper}
 		 */
-		createSelector(options,details) {
+		createSelector (options, details) {
 			if (!options) {
 				options = [];
 			}
 
-			if ( !details ) {
+			if (!details) {
 				details = {};
 			}
-			if(!Array.isArray(options) || typeof details !== 'object') {
-				throw 'Error: Invalid type';
+			if (!Array.isArray(options) || typeof details !== 'object') {
+				console.error('Invalid type/details');
+				this.node = null;
+				return this;
 			}
 
 			this.node = document.createElement('select');
@@ -570,7 +573,7 @@ const LionelClient = {
 				this.addClass(details.className);
 			}
 			if (details.classList) {
-				this.addClass(details.classList)
+				this.addClass(details.classList);
 			}
 			if (details.styles) {
 				this.setStyles(details);
@@ -587,11 +590,11 @@ const LionelClient = {
 					const node = document.createElement('option');
 
 					if (typeof option === 'string') {
-						node.setAttribute('value',option);
-						node.innerHTML = option
+						node.setAttribute('value', option);
+						node.innerHTML = option;
 					} else if (typeof option === 'object') {
 						node.innerHTML = option.name || option.innerHTML || '';
-						node.setAttribute('value',option.value || '');
+						node.setAttribute('value', option.value || '');
 					}
 					self.node.appendChild(node);
 				}
@@ -603,13 +606,13 @@ const LionelClient = {
 		 * @param {string|HTMLElement} selector
 		 * @returns {Helper}
 		 */
-		select(selector) {
+		select (selector) {
 			if (selector) {
 				const self = this;
 
-				if ( typeof selector === 'string' ) {
+				if (typeof selector === 'string') {
 					self.node = document.querySelector(selector);
-				} else if ( selector instanceof HTMLElement ) {
+				} else if (selector instanceof HTMLElement) {
 					self.node = selector;
 				}
 			}
@@ -629,16 +632,18 @@ const LionelClient = {
 		 * @param details.styles
 		 * @returns {Helper}
 		 */
-		createForm(inputs,details) {
+		createForm (inputs, details) {
 			if (!inputs) {
 				inputs = [];
 			}
 
-			if ( !details ) {
+			if (!details) {
 				details = {};
 			}
-			if(!inputs || typeof details !== 'object') {
-				throw 'Error: Invalid type';
+			if (!inputs || typeof details !== 'object') {
+				console.error('Invalid type/details');
+				this.node = null;
+				return this;
 			}
 
 			this.node = document.createElement('form');
@@ -648,7 +653,7 @@ const LionelClient = {
 				this.addClass(details.className);
 			}
 			if (details.classList) {
-				this.addClass(details.classList)
+				this.addClass(details.classList);
 			}
 			if (details.styles) {
 				this.setStyles(details);
@@ -660,27 +665,26 @@ const LionelClient = {
 						if (input.label) {
 							const label = document.createElement('label');
 							if (input.id) {
-								label.setAttribute('for',input.id);
+								label.setAttribute('for', input.id);
 							}
 							label.innerHTML = input.label;
 							self.node.appendChild(label);
 						}
 						self.node.appendChild(input);
 					} else if (typeof input === 'object') {
-
 						const node = document.createElement('input');
-						node.setAttribute('type',input.type || 'text');
+						node.setAttribute('type', input.type || 'text');
 						if (input.value) {
-							node.setAttribute('value',input.value);
+							node.setAttribute('value', input.value);
 						}
 						if (typeof input.checked === 'boolean') {
-							node.setAttribute('value',input.checked);
+							node.setAttribute('value', input.checked);
 						}
 						if (input.placeholder) {
-							node.setAttribute('value',input.placeholder);
+							node.setAttribute('value', input.placeholder);
 						}
 						if (input.name) {
-							node.setAttribute('value',input.name);
+							node.setAttribute('value', input.name);
 						}
 						if (input.innerHTML) {
 							node.innerHTML = input.innerHTML;
@@ -694,7 +698,7 @@ const LionelClient = {
 						if (input.label) {
 							const label = document.createElement('label');
 							if (input.id) {
-								label.setAttribute('for',input.id);
+								label.setAttribute('for', input.id);
 							}
 							label.innerHTML = input.label;
 							self.node.appendChild(label);
@@ -705,35 +709,308 @@ const LionelClient = {
 			};
 
 			if (details.title) {
-				const title = document.createElement('h3');
+				const title = document.createElement('h5');
 				title.classList.add('title');
 				title.innerHTML = details.title;
 				this.node.appendChild(title);
 			}
 			if (Array.isArray(inputs)) {
 				inputs.forEach(createInput);
-			} else if(typeof inputs === 'object'){
+			} else if (typeof inputs === 'object') {
 				const inputList = Object.keys(inputs);
 				inputList.forEach(id => {
 					inputs[id].id = id;
 					createInput(inputs[id]);
-				})
+				});
 			} else {
 				console.warn('Invalid input');
 			}
 
 			if (details.action) {
-				this.node.setAttribute('action',details.action);
+				this.node.setAttribute('action', details.action);
 			}
 			if (details.method) {
-				this.node.setAttribute('method',details.method);
+				this.node.setAttribute('method', details.method);
 			}
 			if (details.target) {
-				this.node.setAttribute('target',details.target);
+				this.node.setAttribute('target', details.target);
 			}
 
 			return this;
+		},
+
+		/**
+		 *
+		 * @param {Object} options
+		 * @param options.title
+		 * @param options.onclose
+		 * @param options.nodes
+		 * @param options.innerHTML
+		 * @param options.buttons
+		 * @returns {LionelClient}
+		 */
+		createWindow (options) {
+			if (!options) {
+				options = {};
+			}
+			this.node = document.createElement('div');
+			this.addClass('modal-content');
+			this.setStyles({
+				margin: '5px',
+				width: 'auto'
+			});
+
+			const header = document.createElement('div');
+			header.classList.add('modal-header');
+
+			const title = document.createElement('h5');
+			title.innerHTML = options.title || '';
+
+			const closeButton = document.createElement('button');
+			closeButton.classList.add('close');
+			closeButton.setAttribute('type', 'button');
+			closeButton.style.zIndex = '999';
+
+			const times = document.createElement('span');
+			times.setAttribute('aria-hidden', 'true');
+			times.innerHTML = '×';
+
+			if (typeof options.onclose === 'function') {
+				closeButton.onclick = function () {
+					self.node.outerHTML = '';
+					options.onclose();
+				};
+			} else if (options.onclose === 'destroy') {
+				const self = this;
+				closeButton.onclick = function () {
+					self.node.outerHTML = '';
+				};
+			}
+			closeButton.appendChild(times);
+
+			header.appendChild(title);
+			header.appendChild(closeButton);
+
+			this.node.appendChild(header);
+
+			const content = document.createElement('div');
+			content.classList.add('modal-body');
+
+			const self = this;
+			if (Array.isArray(options.nodes)) {
+				options.nodes.forEach(node => {
+					if (node instanceof HTMLElement) {
+						self.node.appendChild(node);
+					}
+				});
+			}
+			if (typeof options.innerHTML === 'string' || typeof options.innerHTML === 'number') {
+				self.node.innerHTML += options.innerHTML;
+			}
+
+			self.node.appendChild(content);
+
+			const footer = document.createElement('div');
+			footer.classList.add('modal-footer');
+
+			if (Array.isArray(options.buttons)) {
+				options.buttons.forEach(button => {
+					const element = document.createElement('button');
+					element.classList.add('btn');
+					element.setAttribute('type', 'button');
+
+					if (button && typeof button === 'object') {
+						if (typeof button.className === 'string') {
+							element.className += ' ' + button.className;
+						}
+						if (typeof button.onclick === 'function') {
+							element.onclick = button.onclick;
+						}
+						if (typeof button.innerHTML === 'string') {
+							element.innerHTML = button.innerHTML;
+						}
+						if (typeof button.value === 'string') {
+							element.innerHTML = button.value;
+						}
+						footer.appendChild(element);
+					}
+				});
+				self.node.appendChild(footer);
+			}
+
+			return this;
+		},
+		/**
+		 *
+		 * @param {Object} options
+		 * @param options.title
+		 * @param options.nodes
+		 * @param options.innerHTML
+		 * @param options.buttons
+		 * @param options.apply
+		 * @param options.onclose
+		 * @returns {LionelClient}
+		 */
+		createPopup (options) {
+			if (!options) {
+				options = {};
+			}
+
+			const background = document.createElement('div');
+			background.className = 'modal fade show';
+			background.style.display = 'block';
+			background.style.paddingRight = '17px';
+			background.style.background = '#8888888c';
+			background.setAttribute('role', 'dialog');
+
+			if (typeof options.onclose === 'function') {
+				const _onclose = options.onclose;
+				options.onclose = function () {
+					_onclose();
+					background.outerHTML = '';
+				};
+			} else {
+				options.onclose = function () {
+					background.outerHTML = '';
+				};
+			}
+			background.onclick = function (e) {
+				if (e && e.target instanceof HTMLElement) {
+					if (e.target.className && e.target.className === 'modal fade show') {
+						options.onclose();
+					} else if (e.target.className === 'close' ||
+						(e.target.tagName.toUpperCase() === 'SPAN' && e.target.parentElement.className === 'close')) {
+						options.onclose();
+					}
+				}
+			};
+
+			const dialog = document.createElement('div');
+			dialog.className = 'modal-dialog';
+			dialog.setAttribute('role', 'document');
+
+			dialog.appendChild(this.createWindow(options).node);
+
+			background.appendChild(dialog);
+
+			if (options.apply instanceof HTMLElement) {
+				options.apply.appendChild(background);
+			} else {
+				document.body.appendChild(background);
+			}
+			return this;
+		},
+
+		createNavHeader (options) {
+			if (!options) {
+				options = {};
+			}
+			const nav = document.createElement('nav');
+			nav.classList.add('navbar');
+			nav.classList.add('navbar-expand-lg');
+			if (options.vertical) {
+				nav.classList.add('flex-column');
+			}
+
+			if (options.colorScheme === 'dark') {
+				nav.classList.add('navbar-dark');
+				nav.classList.add('bg-dark');
+			} else {
+				nav.classList.add('navbar-light');
+				nav.classList.add('bg-light');
+			}
+			if (options.background) {
+				nav.style.backgroundColor = options.background;
+			}
+			const brand = document.createElement('a');
+			brand.classList.add('navbar-brand');
+			brand.href = '#';
+			if (options.icon) {
+				const img = document.createElement('img');
+				img.src = options.icon;
+				img.width = 30;
+				img.height = 30;
+				if (options.title) {
+					img.classList.add('d-inline-block');
+					img.classList.add('align-top');
+					brand.appendChild(img);
+					brand.innerHTML += ' ' + options.title;
+				} else {
+					brand.appendChild(img);
+				}
+				nav.appendChild(brand);
+			} else if (options.title) {
+				brand.innerHTML += options.title;
+				nav.appendChild(brand);
+			}
+
+			const navbar = document.createElement('div');
+			if (!options.vertical) {
+				const customInnerId = 'nav' + new Date().getTime();
+				navbar.classList.add('collapse');
+				navbar.classList.add('navbar-collapse');
+				navbar.id = customInnerId;
+
+				const toggleButton = document.createElement('button');
+				toggleButton.className = 'navbar-toggler';
+				toggleButton.setAttribute('tyoe', 'button');
+				toggleButton.setAttribute('data-toggle', 'collapse');
+				toggleButton.setAttribute('data-target', '#' + customInnerId);
+				toggleButton.setAttribute('aria-controls', 'navbarSupportedContent');
+				toggleButton.setAttribute('aria-expanded', 'false');
+				toggleButton.setAttribute('aria-label', 'Toggle navigatiopn');
+
+				toggleButton.innerHTML = '<span class="navbar-toggler-icon"></span>';
+
+				nav.appendChild(toggleButton);
+			}
+
+			this.createNavigation(options);
+			const navigation = this.node;
+			navbar.appendChild(navigation);
+			nav.appendChild(navbar);
+			this.node = nav;
+
+			return this;
+		},
+
+		createNavigation (options) {
+			if (!options) {
+				options = {};
+			}
+			this.node = document.createElement('ul');
+			this.addClass(options.vertical ? 'navbar-nav flex-column' : 'navbar-nav mr-auto');
+			if (Array.isArray(options.items)) {
+				options.items.forEach((item, index) => {
+					if (item) {
+						const li = document.createElement('li');
+						li.classList.add('nav-item');
+						const a = document.createElement('a');
+						a.classList.add('nav-link');
+						if (typeof item === 'string') {
+							// a.setAttribute('href','');
+							a.innerHTML = item;
+							const pathName = location.pathname;
+							if ((pathName.startsWith('/') && pathName.substring(1) === item) ||
+								(pathName === '/' && !index)) {
+								li.classList.add('active');
+							}
+							a.onclick = function () {
+								console.log(item);
+								LionelClient.navigate('/' + item);
+							};
+						} else if (typeof item === 'object') {
+							a.setAttribute('href', item.href);
+							a.innerHTML = item.innerHTML;
+						}
+						li.appendChild(a);
+						this.node.appendChild(li);
+					}
+				});
+			}
+			return this;
 		}
+
 	},
 	callList: {},
 	/**
@@ -751,10 +1028,10 @@ const LionelClient = {
 	 * @param {String} name
 	 */
 	getPage: function (name) {
-		if (!name.endsWith('.php') && !name.endsWith('.html')  && name !== '/') {
-			window.location.href = "/" + name + '.html';
+		if (!name.endsWith('.php') && !name.endsWith('.html') && name !== '/') {
+			window.location.href = '/' + name + '.html';
 		} else {
-			window.location.href = "/"+ name;
+			window.location.href = '/' + name;
 		}
 	},
 	/**
@@ -826,7 +1103,7 @@ const LionelClient = {
 	 */
 	navigate: function (href) {
 		if (!href.endsWith('.php') && !href.endsWith('.html') && href !== '/') {
-			window.location.href = href+'.html';
+			window.location.href = href + '.html';
 		} else {
 			window.location.href = href;
 		}

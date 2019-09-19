@@ -1,6 +1,6 @@
 {
   "name": "lionel-app",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "description": "A lightweight web application framework for learning, and make work more faster.",
   "main": "server.js",
   "scripts": {
@@ -17,7 +17,9 @@
   "dependencies": {
     "body-parser": "^1.19.0",
     "serve-favicon": "^2.5.0",
-    "lionel-commonjs-bundler": "^1.0.5"
+    "lionel-commonjs-bundler": "^1.0.5",
+    "mongodb": "^3.3.2",
+    "mysql": "^2.17.1"
   },
   "devDependencies": {
     "eslint": "^6.2.2"

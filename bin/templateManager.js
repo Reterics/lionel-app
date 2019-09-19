@@ -319,18 +319,18 @@ class TemplateManagerBaseCore {
 
 		if (typeof this.globalJS === 'string') {
 			const modulePath = path.resolve(this.globalJS)
-				.replace('lobals.js','lobals')
-				.replace('phpG','g');
-			const loadToGlobal = 'const { LionelClient } = window.require("'+modulePath+'");';
+				.replace('lobals.js', 'lobals')
+				.replace('phpG', 'g');
+			const loadToGlobal = 'const { LionelClient } = window.require("' + modulePath + '");';
 
 			this.globalStorage.push(modulePath);
-			this.globalStorage.push(modulePath+'.js');
-			const assignToJS  = 'window._modules["'+modulePath+'.js"] = window._modules["'+modulePath+'"]';
+			this.globalStorage.push(modulePath + '.js');
+			const assignToJS = 'window._modules["' + modulePath + '.js"] = window._modules["' + modulePath + '"]';
 			this._templates.__globals = {
-				onRendered: loader + commonJSBundler.packInBundle(modulePath,globalJavascript) +  loadToGlobal + assignToJS
+				onRendered: loader + commonJSBundler.packInBundle(modulePath, globalJavascript) + loadToGlobal + assignToJS
 			};
 		} else {
-			this._templates.__globals = { onRendered:  '' };
+			this._templates.__globals = { onRendered: '' };
 		}
 
 	}
@@ -370,7 +370,7 @@ class TemplateManagerBaseCore {
 			if (a === '__html') {
 				return -1;
 			} else {
-				return 1
+				return 1;
 			}
 		});
 
@@ -391,7 +391,7 @@ class TemplateManagerBaseCore {
 			if (Array.isArray(this.globalStorage) && this.globalStorage.length){
 				this.globalStorage.forEach(function (line) {
 					cacheFormat[line] = '_';
-				})
+				});
 			}
 
 			const options = {
@@ -404,7 +404,7 @@ class TemplateManagerBaseCore {
 			if (isGlobal && Array.isArray(options.loadedFiles) && options.loadedFiles.length) {
 				options.loadedFiles.forEach(function (file) {
 					self.globalStorage.push(file);
-				})
+				});
 			}
 		}
 		this._lastUpdated = new Date().getTime();

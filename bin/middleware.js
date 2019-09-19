@@ -1,7 +1,7 @@
 'use strict';
-const { Lionel } = require("./LionelClass");
-const { errorHandling } = require("./requestManager");
-const { postCall } = require("./requestManager");
+const { Lionel } = require('./LionelClass');
+const { errorHandling } = require('./requestManager');
+const { postCall } = require('./requestManager');
 const { checkFile } = require('./mimeTypes');
 const { FM } = require('./fileManager');
 
@@ -50,6 +50,45 @@ const lionelMiddleware = function () {
 	self.use = function (method) {
 		if (typeof method === 'function') {
 			middlewareList.push(method);
+		}
+	};
+	/**
+	 * Support GET middleware for a specific URL
+	 * @param {string} url
+	 * @param {function} method
+	 */
+	self.post = function (url, method) {
+		if (typeof method === 'function') {
+			const postMethod = function (req, res, next) {
+				if (req && req.method === 'POST' && req.url.split('?')[0] === url) {
+					method(req, res, next);
+				} else if (typeof next === 'function') {
+					next();
+				} else {
+					req.end();
+				}
+			};
+			middlewareList.push(postMethod);
+		}
+	};
+
+	/**
+	 * Support GET middleware for a specific URL
+	 * @param {string} url
+	 * @param {function} method
+	 */
+	self.get = function (url, method) {
+		if (typeof method === 'function') {
+			const getMethod = function (req, res, next) {
+				if (req && req.method === 'GET' && req.url.split('?')[0] === url) {
+					method(req, res, next);
+				} else if (typeof next === 'function') {
+					next();
+				} else {
+					req.end();
+				}
+			};
+			middlewareList.push(getMethod);
 		}
 	};
 

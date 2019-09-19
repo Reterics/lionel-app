@@ -13,7 +13,21 @@
  * @property {string} id - Important for the label
  * @property {string} label - Description/title for input
  */
-
+/**
+ * Convert Object to MySQL Compatible Strings
+ * @param key
+ * @param value
+ * @returns {string}
+ */
+const convertToWHERE = function (key, value) {
+	if (typeof value === 'number' || typeof value === 'boolean') {
+		return key + ' = ' + value;
+	} else if (typeof value === 'string') {
+		return key + ' = "' + value + '"';
+	} else {
+		return '';
+	}
+};
 /**
  * Lionel Client Object
  */
@@ -24,14 +38,14 @@ const LionelClient = {
      */
 	call: function (...args) {
 		let i = 1;
-		const isThereCallback =  typeof args[args.length - 1] === 'function';
+		const isThereCallback = typeof args[args.length - 1] === 'function';
 		const lastArgument = isThereCallback ? args.length - 1 : args.length;
 		if (args.length === 0 || typeof args[0] !== 'string') {
 			if (isThereCallback) {
 				args[0](true, 'At least one parameters are needed for call');
 			}
 			return new Promise((resolve, reject) => {
-				reject(new Error( 'At least one parameters are needed for call'));
+				reject(new Error('At least one parameters are needed for call'));
 			});
 		}
 		const functionName = args[0];
@@ -88,10 +102,12 @@ const LionelClient = {
 				}
 				if (this.readyState === 4) {
 					let response = xHTTP.response;
-					try {
-						response = JSON.parse(xHTTP.response);
-					} catch (e) {
-						console.error(e);
+					if (response.charAt(0) === '{' || response.charAt(0) === '[') {
+						try {
+							response = JSON.parse(xHTTP.response);
+						} catch (e) {
+							console.error(e);
+						}
 					}
 					if (error || (response && response.status && response.status === 'undefined')) {
 						if (response.error === true) {
@@ -233,21 +249,21 @@ const LionelClient = {
 		 * @param {string|string[]} className
 		 * @returns {Helper}
 		 */
-		addClass(className){
+		addClass (className) {
 			const self = this;
 			if (className && self.node instanceof HTMLElement) {
 				if (typeof className === 'string') {
 					className.split(' ').forEach(className => {
-						if( className ) {
+						if (className) {
 							self.node.classList.add(className);
 						}
-					})
-				} else if(Array.isArray(className)){
+					});
+				} else if (Array.isArray(className)) {
 					className.forEach(string => {
-						if(typeof string === 'string' && string){
+						if (typeof string === 'string' && string) {
 							self.node.classList.add(string);
 						}
-					})
+					});
 				}
 			}
 			return this;
@@ -257,29 +273,28 @@ const LionelClient = {
 		 * @param {Object} styles
 		 * @returns {Helper}
 		 */
-		setStyles(styles) {
+		setStyles (styles) {
 			if (styles && typeof styles === 'object' && self.node instanceof HTMLElement) {
 				const keys = Object.keys(styles);
 
 				keys.forEach(key => {
-					if( key && typeof key === 'string') {
-
+					if (key && typeof key === 'string') {
 						const parts = key.split('-');
 
 						if (parts.length === 1) {
 							self.node.style[key] = styles[key];
 						} else {
 							let formattedStyleName = '';
-							parts.forEach((part,index) => {
-								if (part){
+							parts.forEach((part, index) => {
+								if (part) {
 									if (index) {
 										formattedStyleName += part.charAt(0) + part.substring(1);
 									} else {
 										formattedStyleName += part;
 									}
 								}
-
-							})
+							});
+							self.node.style[formattedStyleName] = styles[key];
 						}
 					}
 				});
@@ -287,14 +302,12 @@ const LionelClient = {
 			return this;
 		},
 
-		append(...nodes) {
+		append (...nodes) {
 			if (this.node instanceof HTMLElement) {
-
 				for (let i = 0; i < nodes.length; i++) {
-
-					if(nodes[i] instanceof HTMLElement){
+					if (nodes[i] instanceof HTMLElement) {
 						this.node.appendChild(nodes[i]);
-					} else if (typeof nodes[i] === 'object' && nodes[i].node instanceof HTMLElement){
+					} else if (typeof nodes[i] === 'object' && nodes[i].node instanceof HTMLElement) {
 						this.node.appendChild(nodes[i].node);
 					}
 				}
@@ -306,13 +319,13 @@ const LionelClient = {
 		 * @param {Object} attributes
 		 * @returns {Helper}
 		 */
-		setAttributes(attributes) {
+		setAttributes (attributes) {
 			if (this.node instanceof HTMLElement && attributes && typeof attributes === 'object') {
 				const keys = Object.keys(attributes);
 				const self = this;
 
 				keys.forEach(key => {
-					self.node.setAttribute(key,attributes[key]);
+					self.node.setAttribute(key, attributes[key]);
 				});
 			}
 			return this;
@@ -323,10 +336,10 @@ const LionelClient = {
 		 * @param {function} method
 		 * @returns {Helper}
 		 */
-		on(eventName, method) {
-			if (this.node instanceof HTMLElement && eventName
-				&& typeof eventName === 'string' && typeof method === 'function') {
-				this.node['on'+eventName] = method;
+		on (eventName, method) {
+			if (this.node instanceof HTMLElement && eventName &&
+				typeof eventName === 'string' && typeof method === 'function') {
+				this.node['on' + eventName] = method;
 			}
 			return this;
 		},
@@ -336,9 +349,9 @@ const LionelClient = {
 		 * @param {string} data
 		 * @returns {Helper}
 		 */
-		setData(name,data) {
-			if (this.node instanceof HTMLElement && name && typeof name === 'string' && data ) {
-				this.node.setAttribute('data-'+name,data);
+		setData (name, data) {
+			if (this.node instanceof HTMLElement && name && typeof name === 'string' && data) {
+				this.node.setAttribute('data-' + name, data);
 			}
 			return this;
 		},
@@ -347,9 +360,9 @@ const LionelClient = {
 		 * @param {string} name
 		 * @returns {Helper}
 		 */
-		removeData(name) {
-			if (this.node instanceof HTMLElement && name && typeof name === 'string' ) {
-				this.node.removeAttribute('data-'+name);
+		removeData (name) {
+			if (this.node instanceof HTMLElement && name && typeof name === 'string') {
+				this.node.removeAttribute('data-' + name);
 			}
 			return this;
 		},
@@ -358,20 +371,20 @@ const LionelClient = {
 		 * @param {string} name
 		 * @returns {string|null}
 		 */
-		getData(name) {
+		getData (name) {
 			if (this.node instanceof HTMLElement && name && typeof name === 'string') {
 				return this.node.getAttribute(name);
 			}
 			return null;
 		},
 
-		getAllData() {
+		getAllData () {
 			const attributes = this.attributes;
 			const length = attributes.length;
 			const result = [];
 			for (let i = 0; i < length; i++) {
 				result.push({
-					name:attributes[i].name,
+					name: attributes[i].name,
 					value: attributes[i].value
 				});
 			}
@@ -392,15 +405,17 @@ const LionelClient = {
 		 * @param details.checked
 		 * @returns {Helper}
 		 */
-		createElement(type,details) {
-			if ( !type ) {
-				type = 'div'
+		createElement (type, details) {
+			if (!type) {
+				type = 'div';
 			}
-			if ( !details ) {
+			if (!details) {
 				details = {};
 			}
 			if (typeof type !== 'string' || typeof details !== 'object') {
-				throw 'Error: Invalid type';
+				console.error('Invalid type/details');
+				this.node = null;
+				return this;
 			}
 			this.node = document.createElement(type);
 			const self = this;
@@ -409,7 +424,7 @@ const LionelClient = {
 				this.addClass(details.className);
 			}
 			if (details.classList) {
-				this.addClass(details.classList)
+				this.addClass(details.classList);
 			}
 			if (details.styles) {
 				this.setStyles(details);
@@ -421,7 +436,7 @@ const LionelClient = {
 				this.node.innerHTML = details.innerText;
 			}
 			if (details.innerElement instanceof HTMLElement) {
-				this.node.appendChild(details.innerElement)
+				this.node.appendChild(details.innerElement);
 			}
 			if (Array.isArray(details.innerElements)) {
 				details.innerElements.forEach(element => {
@@ -450,16 +465,18 @@ const LionelClient = {
 		 * @param details.events
 		 * @returns {Helper}
 		 */
-		createTable(lineArray,details) {
+		createTable (lineArray, details) {
 			if (!lineArray) {
 				lineArray = [];
 			}
 
-			if ( !details ) {
+			if (!details) {
 				details = {};
 			}
-			if(!Array.isArray(lineArray) || typeof details !== 'object') {
-				throw 'Error: Invalid type';
+			if (!Array.isArray(lineArray) || typeof details !== 'object') {
+				console.error('Invalid type/details');
+				this.node = null;
+				return this;
 			}
 
 			this.node = document.createElement('table');
@@ -468,7 +485,7 @@ const LionelClient = {
 				this.addClass(details.className);
 			}
 			if (details.classList) {
-				this.addClass(details.classList)
+				this.addClass(details.classList);
 			}
 			if (details.styles) {
 				this.setStyles(details);
@@ -480,13 +497,13 @@ const LionelClient = {
 				if (Array.isArray(columns)) {
 					columns.forEach(column => {
 						const tableElement = document.createElement(type);
-						if (typeof column === 'string' || typeof column === 'number'){
-							tableElement.innerHTML = column
+						if (typeof column === 'string' || typeof column === 'number') {
+							tableElement.innerHTML = column;
 						} else if (typeof column === 'function') {
 							const functionResult = column();
 
 							if (functionResult instanceof HTMLElement) {
-								tableElement.appendChild(functionResult)
+								tableElement.appendChild(functionResult);
 							} else if (functionResult) {
 								tableElement.innerHTML = functionResult;
 							}
@@ -495,11 +512,11 @@ const LionelClient = {
 						} else if (column && typeof column === 'object') {
 							try {
 								tableElement.innerHTML = JSON.stringify(column);
-							} catch ( e ) {
+							} catch (e) {
 								console.warn(e);
 							}
 						} else {
-							console.warn('Invalid column data')
+							console.warn('Invalid column data');
 						}
 
 						tr.appendChild(tableElement);
@@ -514,10 +531,10 @@ const LionelClient = {
 								if (typeof ev.preventDefault === 'function') {
 									ev.preventDefault();
 								}
-								details.events[event](columns,ev);
-							}
+								details.events[event](columns, ev);
+							};
 						}
-					})
+					});
 				}
 
 				return tr;
@@ -525,7 +542,7 @@ const LionelClient = {
 
 			const thead = document.createElement('thead');
 			if (Array.isArray(details.header)) {
-				thead.appendChild(getTableLine(details.header,'th'));
+				thead.appendChild(getTableLine(details.header, 'th'));
 			}
 			this.node.appendChild(thead);
 			const tbody = document.createElement('tbody');
@@ -552,16 +569,18 @@ const LionelClient = {
 		 * @param details.id
 		 * @returns {Helper}
 		 */
-		createSelector(options,details) {
+		createSelector (options, details) {
 			if (!options) {
 				options = [];
 			}
 
-			if ( !details ) {
+			if (!details) {
 				details = {};
 			}
-			if(!Array.isArray(options) || typeof details !== 'object') {
-				throw 'Error: Invalid type';
+			if (!Array.isArray(options) || typeof details !== 'object') {
+				console.error('Invalid type/details');
+				this.node = null;
+				return this;
 			}
 
 			this.node = document.createElement('select');
@@ -570,7 +589,7 @@ const LionelClient = {
 				this.addClass(details.className);
 			}
 			if (details.classList) {
-				this.addClass(details.classList)
+				this.addClass(details.classList);
 			}
 			if (details.styles) {
 				this.setStyles(details);
@@ -587,11 +606,11 @@ const LionelClient = {
 					const node = document.createElement('option');
 
 					if (typeof option === 'string') {
-						node.setAttribute('value',option);
-						node.innerHTML = option
+						node.setAttribute('value', option);
+						node.innerHTML = option;
 					} else if (typeof option === 'object') {
 						node.innerHTML = option.name || option.innerHTML || '';
-						node.setAttribute('value',option.value || '');
+						node.setAttribute('value', option.value || '');
 					}
 					self.node.appendChild(node);
 				}
@@ -603,13 +622,13 @@ const LionelClient = {
 		 * @param {string|HTMLElement} selector
 		 * @returns {Helper}
 		 */
-		select(selector) {
+		select (selector) {
 			if (selector) {
 				const self = this;
 
-				if ( typeof selector === 'string' ) {
+				if (typeof selector === 'string') {
 					self.node = document.querySelector(selector);
-				} else if ( selector instanceof HTMLElement ) {
+				} else if (selector instanceof HTMLElement) {
 					self.node = selector;
 				}
 			}
@@ -629,16 +648,18 @@ const LionelClient = {
 		 * @param details.styles
 		 * @returns {Helper}
 		 */
-		createForm(inputs,details) {
+		createForm (inputs, details) {
 			if (!inputs) {
 				inputs = [];
 			}
 
-			if ( !details ) {
+			if (!details) {
 				details = {};
 			}
-			if(!inputs || typeof details !== 'object') {
-				throw 'Error: Invalid type';
+			if (!inputs || typeof details !== 'object') {
+				console.error('Invalid type/details');
+				this.node = null;
+				return this;
 			}
 
 			this.node = document.createElement('form');
@@ -648,7 +669,7 @@ const LionelClient = {
 				this.addClass(details.className);
 			}
 			if (details.classList) {
-				this.addClass(details.classList)
+				this.addClass(details.classList);
 			}
 			if (details.styles) {
 				this.setStyles(details);
@@ -660,27 +681,26 @@ const LionelClient = {
 						if (input.label) {
 							const label = document.createElement('label');
 							if (input.id) {
-								label.setAttribute('for',input.id);
+								label.setAttribute('for', input.id);
 							}
 							label.innerHTML = input.label;
 							self.node.appendChild(label);
 						}
 						self.node.appendChild(input);
 					} else if (typeof input === 'object') {
-
 						const node = document.createElement('input');
-						node.setAttribute('type',input.type || 'text');
+						node.setAttribute('type', input.type || 'text');
 						if (input.value) {
-							node.setAttribute('value',input.value);
+							node.setAttribute('value', input.value);
 						}
 						if (typeof input.checked === 'boolean') {
-							node.setAttribute('value',input.checked);
+							node.setAttribute('value', input.checked);
 						}
 						if (input.placeholder) {
-							node.setAttribute('value',input.placeholder);
+							node.setAttribute('value', input.placeholder);
 						}
 						if (input.name) {
-							node.setAttribute('value',input.name);
+							node.setAttribute('value', input.name);
 						}
 						if (input.innerHTML) {
 							node.innerHTML = input.innerHTML;
@@ -694,7 +714,7 @@ const LionelClient = {
 						if (input.label) {
 							const label = document.createElement('label');
 							if (input.id) {
-								label.setAttribute('for',input.id);
+								label.setAttribute('for', input.id);
 							}
 							label.innerHTML = input.label;
 							self.node.appendChild(label);
@@ -712,24 +732,24 @@ const LionelClient = {
 			}
 			if (Array.isArray(inputs)) {
 				inputs.forEach(createInput);
-			} else if(typeof inputs === 'object'){
+			} else if (typeof inputs === 'object') {
 				const inputList = Object.keys(inputs);
 				inputList.forEach(id => {
 					inputs[id].id = id;
 					createInput(inputs[id]);
-				})
+				});
 			} else {
 				console.warn('Invalid input');
 			}
 
 			if (details.action) {
-				this.node.setAttribute('action',details.action);
+				this.node.setAttribute('action', details.action);
 			}
 			if (details.method) {
-				this.node.setAttribute('method',details.method);
+				this.node.setAttribute('method', details.method);
 			}
 			if (details.target) {
-				this.node.setAttribute('target',details.target);
+				this.node.setAttribute('target', details.target);
 			}
 
 			return this;
@@ -745,15 +765,15 @@ const LionelClient = {
 		 * @param options.buttons
 		 * @returns {LionelClient}
 		 */
-		createWindow(options){
+		createWindow (options) {
 			if (!options) {
 				options = {};
 			}
 			this.node = document.createElement('div');
 			this.addClass('modal-content');
 			this.setStyles({
-				margin:'5px',
-				width:'auto'
+				margin: '5px',
+				width: 'auto'
 			});
 
 			const header = document.createElement('div');
@@ -764,11 +784,11 @@ const LionelClient = {
 
 			const closeButton = document.createElement('button');
 			closeButton.classList.add('close');
-			closeButton.setAttribute('type','button');
-			closeButton.style.zIndex = "999";
+			closeButton.setAttribute('type', 'button');
+			closeButton.style.zIndex = '999';
 
 			const times = document.createElement('span');
-			times.setAttribute('aria-hidden','true');
+			times.setAttribute('aria-hidden', 'true');
 			times.innerHTML = '×';
 
 			if (typeof options.onclose === 'function') {
@@ -793,7 +813,7 @@ const LionelClient = {
 			content.classList.add('modal-body');
 
 			const self = this;
-			if (Array.isArray(options.nodes)){
+			if (Array.isArray(options.nodes)) {
 				options.nodes.forEach(node => {
 					if (node instanceof HTMLElement) {
 						self.node.appendChild(node);
@@ -813,12 +833,11 @@ const LionelClient = {
 				options.buttons.forEach(button => {
 					const element = document.createElement('button');
 					element.classList.add('btn');
-					element.setAttribute('type','button');
+					element.setAttribute('type', 'button');
 
 					if (button && typeof button === 'object') {
-
 						if (typeof button.className === 'string') {
-							element.className += ' '+button.className;
+							element.className += ' ' + button.className;
 						}
 						if (typeof button.onclick === 'function') {
 							element.onclick = button.onclick;
@@ -848,44 +867,43 @@ const LionelClient = {
 		 * @param options.onclose
 		 * @returns {LionelClient}
 		 */
-		createPopup(options){
+		createPopup (options) {
 			if (!options) {
 				options = {};
 			}
 
 			const background = document.createElement('div');
 			background.className = 'modal fade show';
-			background.style.display= 'block';
-			background.style.paddingRight= '17px';
-			background.style.background= '#8888888c';
-			background.setAttribute('role','dialog');
+			background.style.display = 'block';
+			background.style.paddingRight = '17px';
+			background.style.background = '#8888888c';
+			background.setAttribute('role', 'dialog');
 
 			if (typeof options.onclose === 'function') {
 				const _onclose = options.onclose;
 				options.onclose = function () {
 					_onclose();
 					background.outerHTML = '';
-				}
+				};
 			} else {
 				options.onclose = function () {
 					background.outerHTML = '';
-				}
+				};
 			}
 			background.onclick = function (e) {
-				if( e && e.target instanceof HTMLElement){
+				if (e && e.target instanceof HTMLElement) {
 					if (e.target.className && e.target.className === 'modal fade show') {
-						options.onclose()
-
-					}else if (e.target.className === 'close' ||
-						( e.target.tagName.toUpperCase() === 'SPAN' && e.target.parentElement.className === 'close') ){
-						options.onclose()
+						options.onclose();
+					} else if (e.target.className === 'close' ||
+						(e.target.tagName.toUpperCase() === 'SPAN' && e.target.parentElement.className === 'close')) {
+						options.onclose();
 					}
 				}
 			};
 
 			const dialog = document.createElement('div');
 			dialog.className = 'modal-dialog';
-			dialog.setAttribute('role','document');
+			dialog.setAttribute('role', 'document');
 
 			dialog.appendChild(this.createWindow(options).node);
 
@@ -899,7 +917,7 @@ const LionelClient = {
 			return this;
 		},
 
-		createNavHeader(options) {
+		createNavHeader (options) {
 			if (!options) {
 				options = {};
 			}
@@ -916,7 +934,6 @@ const LionelClient = {
 			} else {
 				nav.classList.add('navbar-light');
 				nav.classList.add('bg-light');
-
 			}
 			if (options.background) {
 				nav.style.backgroundColor = options.background;
@@ -943,23 +960,21 @@ const LionelClient = {
 				nav.appendChild(brand);
 			}
 
-
 			const navbar = document.createElement('div');
 			if (!options.vertical) {
-
-				const customInnerId = 'nav'+new Date().getTime();
+				const customInnerId = 'nav' + new Date().getTime();
 				navbar.classList.add('collapse');
 				navbar.classList.add('navbar-collapse');
 				navbar.id = customInnerId;
 
 				const toggleButton = document.createElement('button');
 				toggleButton.className = 'navbar-toggler';
-				toggleButton.setAttribute('tyoe','button');
-				toggleButton.setAttribute('data-toggle','collapse');
-				toggleButton.setAttribute('data-target','#'+customInnerId);
-				toggleButton.setAttribute('aria-controls','navbarSupportedContent');
-				toggleButton.setAttribute('aria-expanded','false');
-				toggleButton.setAttribute('aria-label','Toggle navigatiopn');
+				toggleButton.setAttribute('tyoe', 'button');
+				toggleButton.setAttribute('data-toggle', 'collapse');
+				toggleButton.setAttribute('data-target', '#' + customInnerId);
+				toggleButton.setAttribute('aria-controls', 'navbarSupportedContent');
+				toggleButton.setAttribute('aria-expanded', 'false');
+				toggleButton.setAttribute('aria-label', 'Toggle navigatiopn');
 
 				toggleButton.innerHTML = '<span class="navbar-toggler-icon"></span>';
 
@@ -975,7 +990,7 @@ const LionelClient = {
 			return this;
 		},
 
-		createNavigation(options) {
+		createNavigation (options) {
 			if (!options) {
 				options = {};
 			}
@@ -989,19 +1004,19 @@ const LionelClient = {
 						const a = document.createElement('a');
 						a.classList.add('nav-link');
 						if (typeof item === 'string') {
-							//a.setAttribute('href','');
+							// a.setAttribute('href','');
 							a.innerHTML = item;
 							const pathName = location.pathname;
-							if ( (pathName.startsWith('/') && pathName.substring(1) === item)
-							 || (pathName === '/' && !index) ) {
+							if ((pathName.startsWith('/') && pathName.substring(1) === item) ||
+								(pathName === '/' && !index)) {
 								li.classList.add('active');
 							}
 							a.onclick = function () {
 								console.log(item);
-								LionelClient.navigate('/'+item);
-							}
-						} else if(typeof item === 'object') {
-							a.setAttribute('href',item.href);
+								LionelClient.navigate('/' + item);
+							};
+						} else if (typeof item === 'object') {
+							a.setAttribute('href', item.href);
 							a.innerHTML = item.innerHTML;
 						}
 						li.appendChild(a);
@@ -1247,6 +1262,164 @@ const LionelClient = {
 			}
 		}
 		return '';
+	},
+	mongodb: function (queryType, query) {
+		if (queryType && query) {
+			return LionelClient.call('mongodb', queryType, query);
+		}
+		return {
+			listCollections: function () {
+				return LionelClient.call('mongodb', 'list');
+			},
+			find: function (collection, filter) {
+				const query = {
+					collection: collection,
+					object: filter
+				};
+				return LionelClient.call('mongodb', 'find', query);
+			},
+			update: function (collection, filter, details) {
+				const query = {
+					collection: collection,
+					object: filter,
+					details: details
+				};
+				return LionelClient.call('mongodb', 'update', query);
+			},
+			delete: function (collection, filter) {
+				const query = {
+					collection: collection,
+					object: filter
+				};
+				return LionelClient.call('mongodb', 'delete', query);
+			},
+			add: function (collection, object) {
+				const query = {
+					collection: collection,
+					object: object
+				};
+				return LionelClient.call('mongodb', 'add', query);
+			}
+		};
+	},
+	mysql: function (queryType, query) {
+		if (queryType && query) {
+			return LionelClient.call('mysql', queryType, query);
+		}
+		return {
+			listTables: function () {
+				return LionelClient.call('mysql', 'list');
+			},
+			removeTable: function (table) {
+				return LionelClient.call('mysql', 'deleteTable', table);
+			},
+			/**
+			 * @param {string} table
+			 * @param {string} filter
+			 */
+			select: function (table, filter) {
+				const target = { target: table, filter: filter };
+
+				if (typeof target.filter === 'object') {
+					const keys = Object.keys(target.filter);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ' AND ';
+							}
+							where += convertToWHERE(key, target.filter[key]);
+						});
+						target.filter = where;
+					} else {
+						return LionelClient.call('mysql', 'listAllIn', table);
+					}
+				}
+
+				return LionelClient.call('mysql', 'listIn', target);
+			},
+			/**
+			 * @param {string} table
+			 */
+			selectAll: function (table) {
+				return LionelClient.call('mysql', 'listAllIn', table);
+			},
+			/**
+			 *
+			 * @param {string} table
+			 * @param {string|Object} filter
+			 * @param {string|Object} data
+			 * @returns {*|*|Promise<any>|Promise<any>}
+			 */
+			update: function (table, filter, data) {
+				const query = {
+					target: table,
+					filter: filter,
+					data: data
+				};
+
+				if (typeof query.filter === 'object') {
+					const keys = Object.keys(query.filter);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ' AND ';
+							}
+							where += convertToWHERE(key, query.filter[key]);
+						});
+						query.filter = where;
+					} else {
+						return new Promise((resolve, reject) => reject(new Error('Invalid Filter')));
+					}
+				}
+				if (typeof query.data === 'object') {
+					const keys = Object.keys(query.data);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ', ';
+							}
+							where += convertToWHERE(key, query.data[key]);
+						});
+						query.data = where;
+					} else {
+						return new Promise((resolve, reject) => reject(new Error('Invalid Data')));
+					}
+				}
+				return LionelClient.call('mysql', 'update', query);
+			},
+			/**
+			 *
+			 * @param {string} table
+			 * @param {string|Object} filter
+			 * @returns {*|*|Promise<any>|Promise<any>}
+			 */
+			delete: function (table, filter) {
+				const query = {
+					target: table,
+					filter: filter,
+				};
+
+				if (typeof query.filter === 'object') {
+					const keys = Object.keys(query.filter);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ' AND ';
+							}
+							where += convertToWHERE(key, query.filter[key]);
+						});
+						query.filter = where;
+					} else {
+						return new Promise((resolve, reject) => reject(new Error('Invalid Filter')));
+					}
+				}
+				return LionelClient.call('mysql', 'delete', query);
+			},
+		};
 	}
 };
 if (!window._modules) { window._modules = {}; }

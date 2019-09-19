@@ -94,8 +94,22 @@ const postCall = function (req, res) {
 				res.setHeader('Content-Type', 'application/json');
 				if (result === undefined) {
 					result = { status: 'undefined' };
+				} else if (result instanceof Promise) {
+					result.then(function (data) {
+						if (typeof data === 'string' || typeof data === 'number') {
+							res.send(data);
+						} else {
+							res.send(JSON.stringify(data));
+						}
+					}).catch(function () {
+						res.setHeader('Content-Type', 'text/plain');
+						res.send('<h1 style="margin-top: 60px">500 - Error in Processing request</h1>');
+					});
+				} else if (typeof result === 'string' || typeof result === 'number') {
+					res.send(result);
+				} else {
+					res.send(JSON.stringify(result));
 				}
-				res.send(JSON.stringify(result));
 				return;
 			} else {
 				result = Lionel._methods[method].call(user, content);
@@ -104,7 +118,6 @@ const postCall = function (req, res) {
 		}
 	} else {
 		res.setHeader('Content-Type', 'application/json');
-		console.log('Method is not found: ' + method);
 		res.send('{status: \'Method is not found\'}');
 	}
 };

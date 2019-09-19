@@ -90,6 +90,58 @@ Router.route('/index');
 Router.route('/', 'index');
 
 ```
+
+First server with Databases (mongoDB and MySQL compatibility added)
+
+In a Node JS application (later in PHP too), you can manage external databases like MySQL and MongoDB and access 
+them from the client with LionelClient.mongodb() and LionelClient.mysql() in the client.
+
+API is simple so anybody can start learning and create an application what using databases.
+
+Later if the PHP support will be finished, Lionel-App can be used for Full Stack Development on almost every online 
+Web Server what you can rent.
+
+```javascript
+const {initLionelServer} = require("lionel-app/bin/initLionelServer");
+const {Lionel} = require("lionel-app/bin/LionelClass");
+const Router = Lionel.Router;
+
+const {app} = require("./app");
+
+
+const port = 8080;
+initLionelServer(port,{
+	appData: 'appData', //Folder in application data. (If needed)
+	appName: 'Application', // Application name
+	view:'./app/views/', //Folder for the HTML files/templates
+	js:'./app/js/', //Folder path for the onRendered Javascripts for the templates
+	mainDirectory:__dirname, //Current working directory
+	requestListener:app,
+	db: [
+    		{
+    			type: 'mysql',
+    			host: 'localhost',
+    			database: 'angel',
+    			port: 3306,
+    			username: 'root',
+    			password: ''
+    		},
+    		{
+    			type: 'mongodb',
+    			host: 'localhost',
+    			database: 'collection',
+    			username: '',
+    			password: '',
+    			port: 27017,
+    		}
+    	]
+});
+
+
+Router.route('/index');
+Router.route('/', 'index');
+
+```
 ## Future updates
 
 Because of the Lionel App project is not done, it means i will send more updates in the future with

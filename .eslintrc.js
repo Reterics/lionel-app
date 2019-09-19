@@ -14,10 +14,6 @@ module.exports = {
 		'ecmaVersion': 2018
 	},
 	'rules': {
-		'indent': [
-			'error',
-			'tab'
-		],
 		'linebreak-style': [
 			'error',
 			'windows'
@@ -73,6 +69,7 @@ module.exports = {
 		"no-compare-neg-zero": "error",
 		"no-cond-assign": "error",
 		"no-const-assign": "error",
+		"no-console": "off",
 		"no-constant-condition": ["error", { "checkLoops": false }],
 		"no-control-regex": "error",
 		"no-debugger": "error",

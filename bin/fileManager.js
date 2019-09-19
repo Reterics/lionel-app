@@ -17,7 +17,7 @@ const FM = {
 	 * @param {String} options.appData
 	 * @param {String} options.appName
 	 */
-	setVariables: function (options){
+	setVariables: function (options) {
 		if (options.mainDirectory) {
 			this.mainDirectory = options.mainDirectory;
 		}
@@ -30,7 +30,6 @@ const FM = {
 		if (options.appName) {
 			this.appName = options.appName;
 		}
-
 	},
 	/**
 	 * @returns {boolean}

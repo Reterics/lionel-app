@@ -1,7 +1,9 @@
 'use strict';
-const {TemplateManagerBaseCore} = require("./templateManager");
-const {lionelCallMiddle} = require("./middleware");
-const { parseArguments, getArgumentValue } = require("./appMethods");
+const { MongoDBClass } = require('./db/mongoDB');
+const { MySQLClass } = require('./db/mysql');
+const { TemplateManagerBaseCore } = require('./templateManager');
+const { lionelCallMiddle } = require('./middleware');
+const { parseArguments, getArgumentValue } = require('./appMethods');
 const FM = require('./fileManager').FM;
 
 /**
@@ -25,22 +27,22 @@ const normalizePort = function (val) {
  * @param {array} argumentList
  * @param {object} options
  */
-const getServerInstance = function (argumentList,options) {
+const getServerInstance = function (argumentList, options) {
 	if (!options) options = {};
 
 	const { app } = require('../app');
 
 	let middleware = app;
-	if (options.requestListener){
+	if (options.requestListener) {
 		middleware = options.requestListener;
-		if(typeof options.requestListener.use === 'function') {
-			options.requestListener.use(lionelCallMiddle)
+		if (typeof options.requestListener.use === 'function') {
+			options.requestListener.use(lionelCallMiddle);
 		}
 	} else {
 		middleware.use(lionelCallMiddle);
 	}
 
-	const listener = middleware.isLionel && typeof middleware.listen === 'function'? middleware.listen : middleware;
+	const listener = middleware.isLionel && typeof middleware.listen === 'function' ? middleware.listen : middleware;
 	const certificateKey = getArgumentValue('key', argumentList);
 	const certificateCert = getArgumentValue('cert', argumentList) + '';
 	const serverType = certificateCert && certificateKey && FM.fileExists(certificateKey) && FM.fileExists(certificateCert) ? 'https' : 'http';
@@ -143,21 +145,21 @@ const serverSelfTest = function (Lionel, FM, options) {
 	const done = () => process.exit(0);
 
 	const simulatedRes = {
-		write:done,
-		send:done,
-		end:()=>{}
+		write: done,
+		send: done,
+		end: () => {}
 	};
 	const simulatedReq = {
-		body:'',
-		headers: {'transfer-encoding':'utf-8','content-length':3}
+		body: '',
+		headers: { 'transfer-encoding': 'utf-8', 'content-length': 3 }
 	};
 
 	if (!options.requestListener) {
 		process.exit(0);
-	} else if (typeof options.requestListener === 'function'){
-		options.requestListener(simulatedReq,simulatedRes);
+	} else if (typeof options.requestListener === 'function') {
+		options.requestListener(simulatedReq, simulatedRes);
 	} else if (options.requestListener.isLionel && typeof options.requestListener.listen === 'function') {
-		options.requestListener.listen(simulatedReq,simulatedRes);
+		options.requestListener.listen(simulatedReq, simulatedRes);
 	} else {
 		console.error('Invalid request listener');
 		process.exit(1);
@@ -165,7 +167,7 @@ const serverSelfTest = function (Lionel, FM, options) {
 	setTimeout(function () {
 		console.error('Request listener timeout');
 		process.exit(1);
-	},20000);
+	}, 20000);
 };
 /**
  * Initialize the HTTP Web Server
@@ -180,11 +182,11 @@ const serverSelfTest = function (Lionel, FM, options) {
  * @param {String} options.appData
  * @param {String} options.appName
  * @param {String} options.phpExport
+ * @param {Array} options.db
  * @param {Boolean} options.liveUpdate
  * @param {function|undefined|null} options.requestListener
  */
 const initLionelServer = function (port, options) {
-
 	// eslint-disable-next-line no-undef
 	const FM = require('./fileManager.js').FM;
 	FM._validateAppData();
@@ -202,14 +204,14 @@ const initLionelServer = function (port, options) {
 	 */
 	Lionel.templateManager = new TemplateManagerBaseCore({
 		lib: options.lib, // Importable files for require statements
-		//global: globalsJS, // global/window functions/values
+		// global: globalsJS, // global/window functions/values
 		view: options.view, // HTML files
 		js: options.js, // onload/onRendered javascript files
 		debug: options.debug
 	});
 
 	const path = require('path');
-	const routes = path.resolve(__dirname,'../app/routes.js');
+	const routes = path.resolve(__dirname, '../app/routes.js');
 	if (FM.fileExistsSync(routes)) {
 		require(routes);
 	}
@@ -225,21 +227,36 @@ const initLionelServer = function (port, options) {
 		return;
 	}
 
+	if (options.db && Array.isArray(options.db)) {
+		options.db.forEach(function (db) {
+			switch (db.type) {
+				case 'mysql':
+					Lionel.DB.mysql = new MySQLClass();
+					Lionel.DB.mysql.init(db);
+					break;
+				case 'mongodb':
+					Lionel.DB.mongodb = new MongoDBClass();
+					Lionel.DB.mongodb.init(db);
+					break;
+			}
+		});
+	}
+
 	if (options.liveUpdate) {
 		const { enableSTDIN } = require('./initLionelServer');
-		enableSTDIN(Lionel,options.lib,options.js);
+		enableSTDIN(Lionel, options.lib, options.js);
 	}
 
 	const argumentList = parseArguments();
 	process.env.PORT = getArgumentValue('port', argumentList) || port;
 	const normalizedPort = normalizePort(process.env.PORT);
 
-	const server = getServerInstance(argumentList,options);
+	const server = getServerInstance(argumentList, options);
 
 	server.on('error', function (error) {
 		onServerError.call(this, error, normalizedPort);
 	});
-	server.on('listening', getArgumentValue('test',argumentList) ? serverSelfTest(Lionel,FM,options): onListening);
+	server.on('listening', getArgumentValue('test', argumentList) ? serverSelfTest(Lionel, FM, options) : onListening);
 
 	server.listen(normalizedPort);
 	console.log('Server is Ready');
@@ -250,7 +267,7 @@ const initLionelServer = function (port, options) {
  * @param libFolder
  * @param jsFolder
  */
-const enableSTDIN = function (Lionel,libFolder,jsFolder) {
+const enableSTDIN = function (Lionel, libFolder, jsFolder) {
 	process.stdin.resume();
 	process.stdin.on('data', function () {
 		if (Lionel.templateManager._lastUpdated) {

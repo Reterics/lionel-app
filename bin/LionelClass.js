@@ -11,7 +11,7 @@ const path = require('path');
  * @returns {string|*|string}
  */
 const getLib = (name) => {
-	const publicFolder = '.'+FM.separator+'app'+FM.separator+'public'+FM.separator;
+	const publicFolder = '.' + FM.separator + 'app' + FM.separator + 'public' + FM.separator;
 	const publicJS = path.resolve(publicFolder + 'js' + FM.separator + name + '.js');
 	const publicGlobal = path.resolve(publicFolder + name + '.js');
 
@@ -22,7 +22,7 @@ const getLib = (name) => {
 	} else if (FM.fileExistsSync(publicFolder + 'js' + FM.separator + name + '.js')) {
 		return FM.read(publicFolder + 'js' + FM.separator + name + '.js');
 	} else {
-		return '/*File not found: '+name+'*/';
+		return '/*File not found: ' + name + '*/';
 	}
 };
 
@@ -50,6 +50,18 @@ const Lionel = {
 				return output;
 			}
 			return getLib(name);
+		},
+		mysql: function (queryType, query) {
+			if (!Lionel.DB || !Lionel.DB.mysql || !Lionel.DB.mysql._handleQuery) {
+				return 'There is no valid DB connected with this details to Lionel-App';
+			}
+			return Lionel.DB.mysql._handleQuery(queryType, query);
+		},
+		mongodb: function (queryType, query) {
+			if (!Lionel.DB || !Lionel.DB.mongodb || !Lionel.DB.mongodb._handleQuery) {
+				return 'There is no valid DB connected with this details to Lionel-App';
+			}
+			return Lionel.DB.mongodb._handleQuery(queryType, query);
 		}
 	},
 	_innerMethods: {
@@ -117,8 +129,8 @@ const Lionel = {
 			if (typeof this.routes[url] === 'function') {
 				this.routes[url].apply(this, []);
 				templateName = this.currentTemplate;
-			} else if(url === 'index'){
-				 templateName = url; // Patch: dont use every template
+			} else if (url === 'index') {
+				templateName = url; // Patch: dont use every template
 			}
 			if (typeof callback === 'function') {
 				callback(templateName);
@@ -163,6 +175,9 @@ const Lionel = {
 			return !this.isSecureConsole(url, res);
 		}
 	},
+	DB: {
+
+	}
 };
 
 module.exports = { Lionel };
