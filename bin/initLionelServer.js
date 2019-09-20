@@ -223,7 +223,7 @@ const initLionelServer = function (port, options) {
 		 */
 		const { exportToHTML } = require('./staticExport');
 
-		exportToHTML('./htdocs/');
+		exportToHTML(options);
 		return;
 	}
 

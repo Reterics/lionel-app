@@ -25,12 +25,12 @@ Lionel backend give you:
 
 ## Install
 
-Install from console
+#####Install from console
 ```
 npm install lionel-app
 ```
 
-First server (basic)
+#####First server (basic)
 
 ```javascript
 const {initLionelServer} = require("lionel-app/bin/initLionelServer");
@@ -59,7 +59,7 @@ Router.route('/', 'index');
 
 ```
 
-First server (Middleware)
+#####First server (Middleware)
 
 For middleware you can use Express JS and Lionel Middleware too. Usage is almost the same. Details in the documentation later
 
@@ -91,15 +91,14 @@ Router.route('/', 'index');
 
 ```
 
-First server with Databases (mongoDB and MySQL compatibility added)
+#####First server with Databases (mongoDB and MySQL compatibility added)
 
 In a Node JS application (later in PHP too), you can manage external databases like MySQL and MongoDB and access 
 them from the client with LionelClient.mongodb() and LionelClient.mysql() in the client.
 
 API is simple so anybody can start learning and create an application what using databases.
 
-Later if the PHP support will be finished, Lionel-App can be used for Full Stack Development on almost every online 
-Web Server what you can rent.
+PHP Support only MySQL for now.
 
 ```javascript
 const {initLionelServer} = require("lionel-app/bin/initLionelServer");
@@ -148,6 +147,4 @@ Because of the Lionel App project is not done, it means i will send more updates
 
 
     * A Core development guide
-    * LioDB: A mini database designed for big amount of documents
     * Node JS Multicore and server management: Helps to your server to use more CPU and break the limits of Node JS
-    * Export webpage to Static HTML/PHP content for WebServers

@@ -3,6 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const { FM } = require('./fileManager');
 
+/**
+ * Write a HTML file content to a file.
+ * @param {string} route
+ * @param {string} html
+ * @param {string} folder
+ */
 const makeHTMLFile = function (route, html, folder) {
 	const filePath = path.resolve(folder, route + '.html');
 
@@ -12,9 +18,13 @@ const makeHTMLFile = function (route, html, folder) {
 		console.error(e.message);
 	}
 };
-
-const getPHPRequestManager = function () {
-	const file = './requestManager.php';
+/**
+ * Read the content of PHP file from ./bin/ folder
+ * @param {string} fileName
+ * @returns {string|*|string}
+ */
+const getPHPFile = function (fileName) {
+	const file = './' + fileName;
 	if (fs.existsSync(file)) {
 		return FM.read(file);
 	}
@@ -26,7 +36,7 @@ const getPHPRequestManager = function () {
 	} else if (fs.existsSync(resolved)) {
 		return FM.read(resolved);
 	} else {
-		return '<?php  echo \'LionelClient operations are not supported by this server\';';
+		return '<?php  echo \'LionelClient operations are not supported by this server\'; ?>';
 	}
 };
 
@@ -54,7 +64,12 @@ const setPHPGlobals = function () {
 	}
 };
 
-const exportToHTML = function (folder) {
+const exportToHTML = function (options) {
+	const folder = options.phpExport;
+	if (!folder || typeof folder !== 'string') {
+		console.error('There is no valid folder name');
+		return;
+	}
 	if (!fs.existsSync(folder)) {
 		let error = false;
 		try {
@@ -96,7 +111,23 @@ const exportToHTML = function (folder) {
 		FM.copy(publicPath, folder);
 	});
 
-	FM.write(path.resolve(folder, 'call.php'), getPHPRequestManager());
+	let phpConfig = '<?php ';
+	if (options.db && Array.isArray(options.db)) {
+		options.db.forEach(function (db) {
+			if (db.type === 'mysql') {
+				if (db.port !== 3306 && typeof db.port === 'number') {
+					phpConfig += '$dbHost = "' + db.host + ':' + db.port + '";';
+				} else {
+					phpConfig += '$dbHost = "' + db.host + '";';
+				}
+				phpConfig += '$dbUser = "' + db.username + '";';
+				phpConfig += '$dbPass = "' + db.password + '";';
+				phpConfig += '$dbName = "' + db.database + '";';
+			}
+		});
+	}
+	phpConfig += ' ?> ';
+	FM.write(path.resolve(folder, 'call.php'), phpConfig + getPHPFile('requestManager.php'));
 	console.log('Your app exported to PHP to' + path.resolve(folder));
 	process.exit(0);
 };

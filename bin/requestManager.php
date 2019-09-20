@@ -81,6 +81,57 @@ if (!empty($json)) {
         echo '{"error":" __getRenderedTemplate is only supported in the Lionel-App Javascript version", "result":"__getRenderedTemplate is only supported in the Lionel-App Javascript version"}';
     } elseif ($method === "none") {
         echo "Invalid POST/GET call";
+    } elseif ($method === "mysql") {
+        $conn = false;
+        try{
+            $conn = mysqli_connect($dbHost, $dbUser, $dbPass, $dbName);
+            if (mysqli_connect_errno())
+            {
+              echo "Failed to connect to MySQL: " . mysqli_connect_error();
+            } else {
+                if ($decoded['arguments'][0] == "type") {
+                    echo "mysql";
+                    mysqli_close($conn);
+                    return;
+                } elseif ($decoded['arguments'][0] === "query") {
+                    $result = mysqli_query($conn, $decoded['arguments'][1]);
+                } elseif ($decoded['arguments'][0] === "list") {
+                    $result = mysqli_query($conn, 'show tables');
+                } elseif ($decoded['arguments'][0] === "deleteTable") {
+                    $result = mysqli_query($conn, 'DROP TABLE ' . $decoded['arguments'][1]);
+                } elseif ($decoded['arguments'][0] === "listAllIn") {
+                    $result = mysqli_query($conn, 'select * from ' . $decoded['arguments'][1]);
+                } elseif ($decoded['arguments'][0] === "listIn") {
+                    $queryData = $decoded['arguments'][1];
+                    $result = mysqli_query($conn, 'select * from ' . $queryData['target'] . ' where ' . $queryData['filter']);
+                } elseif ($decoded['arguments'][0] === "update") {
+                    $queryData = $decoded['arguments'][1];
+                    $result = mysqli_query($conn, 'update ' . $queryData['target'] . ' set ' . $queryData['data'] . ' where ' . $queryData['filter']);
+                } elseif ($decoded['arguments'][0] === "listIn") {
+                     $queryData = $decoded['arguments'][1];
+                     $result = mysqli_query($conn, 'delete from ' . $queryData['target'] . ' where ' . $queryData['filter']);
+                 } else {
+                    echo "Invalid query";
+                    mysqli_close($conn);
+                    return;
+                 }
+
+                if (mysqli_num_rows($result) > 0) {
+                    // output data of each row
+                    $rows = array();
+                    while($row = mysqli_fetch_assoc($result)) {
+                        $rows[] = $row;
+                    }
+                    echo json_encode($rows);
+                } else {
+                    echo "[]";
+                }
+                mysqli_close($conn);
+            }
+
+        }catch (Exception $e){
+            echo 'Error in MySQL call';
+        }
     } else{
         echo '{"error":" LionelClient.call() methods is only supported in the Lionel-App Javascript version", "result":"LionelClient.call() methods is only supported in the Lionel-App Javascript version"}';
     }

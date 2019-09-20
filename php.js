@@ -15,5 +15,15 @@ initLionelServer(port, {
 	debug: true,
 	mainDirectory: mainDirectory,
 	separator: separator,
-	phpExport: './htdocs/'
+	phpExport: './htdocs/',
+	db: [
+		{
+			type: 'mysql',
+			host: 'localhost',
+			database: 'angel',
+			port: 3306,
+			username: 'root',
+			password: ''
+		}
+	]
 });

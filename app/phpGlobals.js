@@ -13,7 +13,21 @@
  * @property {string} id - Important for the label
  * @property {string} label - Description/title for input
  */
-
+/**
+ * Convert Object to MySQL Compatible Strings
+ * @param key
+ * @param value
+ * @returns {string}
+ */
+const convertToWHERE = function (key, value) {
+	if (typeof value === 'number' || typeof value === 'boolean') {
+		return key + ' = ' + value;
+	} else if (typeof value === 'string') {
+		return key + ' = "' + value + '"';
+	} else {
+		return '';
+	}
+};
 /**
  * Lionel Client Object
  */
@@ -1188,6 +1202,125 @@ const LionelClient = {
 			}
 		}
 		return '';
+	},
+	mysql: function (queryType, query) {
+		if (queryType && query) {
+			return LionelClient.call('mysql', queryType, query);
+		}
+		return {
+			listTables: function () {
+				return LionelClient.call('mysql', 'list');
+			},
+			removeTable: function (table) {
+				return LionelClient.call('mysql', 'deleteTable', table);
+			},
+			/**
+			 * @param {string} table
+			 * @param {string} filter
+			 */
+			select: function (table, filter) {
+				const target = { target: table, filter: filter };
+
+				if (typeof target.filter === 'object') {
+					const keys = Object.keys(target.filter);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ' AND ';
+							}
+							where += convertToWHERE(key, target.filter[key]);
+						});
+						target.filter = where;
+					} else {
+						return LionelClient.call('mysql', 'listAllIn', table);
+					}
+				}
+
+				return LionelClient.call('mysql', 'listIn', target);
+			},
+			/**
+			 * @param {string} table
+			 */
+			selectAll: function (table) {
+				return LionelClient.call('mysql', 'listAllIn', table);
+			},
+			/**
+			 *
+			 * @param {string} table
+			 * @param {string|Object} filter
+			 * @param {string|Object} data
+			 * @returns {*|*|Promise<any>|Promise<any>}
+			 */
+			update: function (table, filter, data) {
+				const query = {
+					target: table,
+					filter: filter,
+					data: data
+				};
+
+				if (typeof query.filter === 'object') {
+					const keys = Object.keys(query.filter);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ' AND ';
+							}
+							where += convertToWHERE(key, query.filter[key]);
+						});
+						query.filter = where;
+					} else {
+						return new Promise((resolve, reject) => reject(new Error('Invalid Filter')));
+					}
+				}
+				if (typeof query.data === 'object') {
+					const keys = Object.keys(query.data);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ', ';
+							}
+							where += convertToWHERE(key, query.data[key]);
+						});
+						query.data = where;
+					} else {
+						return new Promise((resolve, reject) => reject(new Error('Invalid Data')));
+					}
+				}
+				return LionelClient.call('mysql', 'update', query);
+			},
+			/**
+			 *
+			 * @param {string} table
+			 * @param {string|Object} filter
+			 * @returns {*|*|Promise<any>|Promise<any>}
+			 */
+			delete: function (table, filter) {
+				const query = {
+					target: table,
+					filter: filter,
+				};
+
+				if (typeof query.filter === 'object') {
+					const keys = Object.keys(query.filter);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ' AND ';
+							}
+							where += convertToWHERE(key, query.filter[key]);
+						});
+						query.filter = where;
+					} else {
+						return new Promise((resolve, reject) => reject(new Error('Invalid Filter')));
+					}
+				}
+				return LionelClient.call('mysql', 'delete', query);
+			},
+		};
 	}
 };
 if (!window._modules) { window._modules = {}; }
