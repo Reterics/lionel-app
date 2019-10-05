@@ -26,6 +26,9 @@ const resultCache = {};
 function getTemplate (content, user, res) {
 	let result;
 	content = (typeof content === 'object' ? content[0] : content).toString();
+	if (content.includes('%')) {
+		content = decodeURI(content);
+	}
 	if (Router.templateExists(content)) {
 		content = [Router.checkRoute(content)];
 		result = Lionel._methods.__getRenderedTemplate.apply(user, content);

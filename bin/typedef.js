@@ -48,5 +48,6 @@
  * @property {function} methods
  * @property {function} startup
  * @property {LionelRouter} Router
+ * @property {boolean} debug
  * @property {null|Object} DB
  */

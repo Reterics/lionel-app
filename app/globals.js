@@ -989,14 +989,70 @@ const LionelClient = {
 
 			return this;
 		},
-
+		GETParameters () {
+			if (!location.search.startsWith('?')) {
+				return {};
+			}
+			const parameters = location.search.substring(1) || '';
+			const output = {};
+			const gets = parameters.split('&');
+			gets.forEach(function (keyValue) {
+				if (keyValue) {
+					const pair = keyValue.split('=');
+					if (pair.length === 2) {
+						const number = parseInt(pair[1]);
+						if (!Number.isNaN(number)) {
+							output[pair[0]] = number;
+						} else if (pair[1] === 'true') {
+							output[pair[0]] = true;
+						} else if (pair[1] === 'false') {
+							output[pair[0]] = false;
+						} else if (pair[1].startsWith('{') || pair[1].startsWith('[')) {
+							try {
+								output[pair[0]] = JSON.parse(decodeURI(pair[1]));
+							} catch (e) {
+								output[pair[0]] = pair[1];
+							}
+						} else if (!pair[1]) {
+							output[pair[0]] = null;
+						} else {
+							output[pair[0]] = pair[1];
+						}
+					}
+				}
+			});
+			return output;
+		},
+		/**
+		 * @param options
+		 * @param {function} options.isActive
+		 * @param {boolean} options.vertical
+		 * @param {string} options.id
+		 * @param {Array} options.items
+		 * @param {string} options.default
+		 * @returns {LionelClient}
+		 */
 		createNavigation (options) {
 			if (!options) {
 				options = {};
 			}
 			this.node = document.createElement('ul');
+			if (!options.id) {
+				options.id = 'navID' + new Date().getTime();
+			}
+			this.node.id = options.id;
 			this.addClass(options.vertical ? 'navbar-nav flex-column' : 'navbar-nav mr-auto');
 			if (Array.isArray(options.items)) {
+				const isDefault = function (item, index, pathName) {
+					if (pathName === '/') {
+						if (options.default === item) {
+							return true;
+						} else if (!options.default && !index) {
+							return true;
+						}
+					}
+					return false;
+				};
 				options.items.forEach((item, index) => {
 					if (item) {
 						const li = document.createElement('li');
@@ -1008,16 +1064,41 @@ const LionelClient = {
 							a.innerHTML = item;
 							const pathName = location.pathname;
 							if ((pathName.startsWith('/') && pathName.substring(1) === item) ||
-								(pathName === '/' && !index)) {
+								isDefault(item, index, pathName)) {
 								li.classList.add('active');
 							}
 							a.onclick = function () {
-								console.log(item);
 								LionelClient.navigate('/' + item);
+
+								document.querySelectorAll('#' + options.id + ' li.nav-item > a').forEach((a, index) => {
+									if ((a.innerHTML === item) ||
+										(pathName === '/' && !index)) {
+										a.parentElement.classList.add('active');
+									} else {
+										a.parentElement.classList.remove('active');
+									}
+								});
 							};
+						} else if (item instanceof HTMLElement) {
+							li.appendChild(item);
+							this.node.appendChild(li);
+							return;
 						} else if (typeof item === 'object') {
-							a.setAttribute('href', item.href);
-							a.innerHTML = item.innerHTML;
+							if (item.href) {
+								a.setAttribute('href', item.href);
+							}
+							if (typeof item.onclick === 'function') {
+								a.onclick = item.onclick;
+							}
+							if (typeof item.icon === 'string') {
+								a.innerHTML = '<img src="' + item.icon + '"  alt=""/>';
+							} else {
+								a.innerHTML = '';
+							}
+							a.innerHTML += item.innerHTML;
+							if (typeof options.isActive === 'function' && options.isActive(li, item.innerHTML)) {
+								li.classList.add('active');
+							}
 						}
 						li.appendChild(a);
 						this.node.appendChild(li);
@@ -1025,8 +1106,70 @@ const LionelClient = {
 				});
 			}
 			return this;
-		}
+		},
 
+		/**
+		 * @param options
+		 * @param {function} options.isActive
+		 * @param {boolean} options.vertical
+		 * @param {string} options.id
+		 * @param {Array} options.items
+		 * @param {string} options.default
+		 * @param {string} options.parent
+		 * @param {string} options.colorScheme
+		 * @param {'left'|'right'} options.position
+		 * @param options.styles
+		 * @returns {HTMLElement}
+		 */
+		createSidebar (options) {
+			if (typeof options !== 'object' || !options) {
+				options = {};
+			}
+			const sidebar = LionelClient.Helper.createElement('aside', {});
+
+			if (typeof options.parent === 'string') {
+				document.querySelectorAll('header.main .nav-link').forEach(function (node) {
+					if (options.parent === node.innerHTML) {
+						node.parentElement.classList.add('active');
+					} else {
+						node.parentElement.classList.remove('active');
+					}
+				});
+			}
+			if (options.colorScheme === 'dark') {
+				sidebar.node.classList.add('navbar-dark');
+				sidebar.node.classList.add('bg-dark');
+			} else {
+				sidebar.node.classList.add('navbar-light');
+				sidebar.node.classList.add('bg-light');
+			}
+			sidebar.node.style.padding = '5px 20px';
+			if (options.styles) {
+				LionelClient.Helper.setStyles(options.styles);
+			}
+			if (!options.vertical) {
+				options.vertical = true;
+			}
+			const sidebarElement = sidebar.node;
+			const navigation = LionelClient.Helper.createNavigation(options).node;
+			sidebarElement.appendChild(navigation);
+
+			if (options.position) {
+				const container = document.querySelector('.LionelPageContent');
+				if (container) {
+					container.style.display = 'flex';
+					container.style.alignItems = 'stretch';
+					if (options.position === 'left') {
+						const mainInner = container.childNodes[0];
+						container.insertBefore(sidebarElement, mainInner);
+					}
+					if (options.position === 'right') {
+						container.appendChild(sidebarElement);
+					}
+				}
+			}
+			return sidebarElement;
+		}
 	},
 	callList: {},
 	/**
@@ -1070,10 +1213,9 @@ const LionelClient = {
 		this.clearAllIntervals();
 		const self = this;
 		if (parent === undefined) parent = '.LionelPageContent';
-		if (name.indexOf('-') !== -1) {
-			name = name.toString().split('-')[0];
-		} else if (name.indexOf(':') !== -1) {
-			name = name.toString().split(':')[0];
+
+		if (name.includes('?')) { // Remove GET attributes
+			name = name.split('?')[0];
 		}
 		name = name.replace('/', '');
 		LionelClient.call('__getRenderedTemplate', name, function (error, result) {
@@ -1092,7 +1234,6 @@ const LionelClient = {
 					setTimeout(function () {
 						location.reload();
 					}, 5000);
-					// }else {
 				}
 			}
 		}).catch(function (e) {

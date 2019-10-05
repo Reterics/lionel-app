@@ -64,7 +64,7 @@ class TemplateManagerBaseCore {
 		if (options.js) {
 			const loadedControllers = this.loadControllers(options.js);
 			if (this._debugMode) {
-				console.log('Loaded ' + loadedControllers + ' Template OnRendered Data to Loader in ' + Math.floor(new Date().getTime() - time) + ' ms');
+				console.log('Loaded ' + loadedControllers + ' onRendered Javascript. Time: ' + Math.floor(new Date().getTime() - time) + ' ms');
 			}
 		}
 	}
@@ -126,7 +126,6 @@ class TemplateManagerBaseCore {
 			this._renderedList.forEach(function (name) {
 				script += self._templates[name].onRendered + '\n';
 			});
-			if (self._debugMode === true) console.log('Render HTML Template');
 			/**
              *  Head will contains 2 <script></script>
              *
@@ -242,7 +241,6 @@ class TemplateManagerBaseCore {
 				return added;
 			}
 		}
-		// let data = '';
 		templatesRaw.forEach(templateRaw => {
 			let name = '';
 			let template = '';
@@ -256,8 +254,6 @@ class TemplateManagerBaseCore {
 				});
 				return '';
 			});
-			// data += templateRaw.split(regexps.check)[0];
-			// data += templateRaw.split(regexps.end)[1] ? templateRaw.split(regexps.end)[1] : '';
 			self.addTemplate(name, template, 'html');
 
 			added++;
@@ -292,7 +288,7 @@ class TemplateManagerBaseCore {
 				added += a;
 			}
 		}
-		if (this._debugMode === true) console.log('Loaded ' + added + ' Template to Loader');
+		if (this._debugMode === true) console.log('Loaded ' + added + ' HTML Template');
 	}
 
 	/**
@@ -412,7 +408,6 @@ class TemplateManagerBaseCore {
 	}
 
 	loadOneClientFile (address) {
-		// this._lastUpdated = new Date().getTime();
 		const file = address.toString();
 		const pos = file.lastIndexOf(FM.separator);
 		const name = file.substring(pos + 1).replace('.js', '');
@@ -429,8 +424,7 @@ class TemplateManagerBaseCore {
 			loadedCache: isGlobal ? {} : this.globalStorage
 		});
 
-		// this._templates[name].onRendered = this._fileUnification.call(this, html, name === '__html');
-		if (this._debugMode === true) console.log('Loaded ' + file + ' Template OnRendered Data to Loader');
+		if (this._debugMode === true) console.log('Loaded ' + file + ' onRendered Javascript');
 	}
 }
 

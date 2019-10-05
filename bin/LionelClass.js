@@ -139,9 +139,12 @@ const Lionel = {
 		},
 		templateExists: function (templateName) {
 			if (typeof templateName === 'string') {
+				if (templateName.includes('%')) {
+					templateName = decodeURI(templateName);
+				}
 				templateName = this.checkRoute(templateName);
 			}
-			return templateName && typeof Lionel.templateManager._templates[templateName] !== 'undefined';
+			return templateName && Lionel.templateManager && typeof Lionel.templateManager._templates[templateName] !== 'undefined';
 		},
 		render: function (templateName) {
 			this.currentTemplate = templateName;
@@ -166,15 +169,20 @@ const Lionel = {
 			return true;
 		},
 		handleRequest: function (url, res) {
-			console.log('Check URL: ' + url);
-			if (this.templateExists(url.substring(1))) {
-				const templateName = this.checkRoute(url);
+			if (this.debug) console.log('Check URL: ' + url);
+			let path = url.substring(1) || '';
+			if (path.includes('%')) {
+				path = decodeURI(path);
+			}
+			if (this.templateExists(path)) {
+				const templateName = this.checkRoute(path);
 				Lionel.templateManager.renderTemplate('__html', { template: templateName }, res);
 				return true;
 			}
 			return !this.isSecureConsole(url, res);
 		}
 	},
+	debug: false,
 	DB: {
 
 	}

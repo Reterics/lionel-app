@@ -194,7 +194,7 @@ const initLionelServer = function (port, options) {
 
 	/**
 	 * Init global Lionel Object
-	 * @type {{methods, startup, Router, templateManager}}
+	 * @type {{methods, startup, Router, templateManager, debug}}
 	 */
 	const Lionel = require('./LionelClass').Lionel;
 
@@ -210,6 +210,7 @@ const initLionelServer = function (port, options) {
 		debug: options.debug
 	});
 
+	Lionel.debug = options.debug;
 	const path = require('path');
 	const routes = path.resolve(__dirname, '../app/routes.js');
 	if (FM.fileExistsSync(routes)) {

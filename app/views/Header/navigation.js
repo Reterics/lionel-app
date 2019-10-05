@@ -5,10 +5,11 @@
 const header = document.querySelector('body > header.main');
 if (!header) {
 	const navigation = LionelClient.Helper.createNavHeader({
-		title:'Lionel App',
-		icon:'logoWhite.png',
-		colorScheme:'dark',
-		items:['index']
+		title: 'Lionel App',
+		icon: 'logoWhite.png',
+		colorScheme: 'dark',
+		items: ['index'],
+		default: 'index'
 	}).node;
 	const node = document.createElement('header');
 	node.classList.add('main');
