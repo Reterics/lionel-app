@@ -159,7 +159,8 @@ const Lionel = {
 					if (data.onRendered) {
 						data = data.onRendered;
 					}
-					data = 'global._onRendered_' + name + '=function(c){window.LionelError = "";Lionel._pageOnRendered();try{\n' + data + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};Lionel._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
+					const scriptName = !name.includes('"') ? '"_onRendered_' + name + '"' : "'_onRendered_" + name + "'";
+					data = 'global[' + scriptName + ']=function(c){window.LionelError = "";Lionel._pageOnRendered();try{\n' + data + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};Lionel._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
 					res.setHeader('Content-Type', 'application/javascript');
 					// res.type('application/javascript');
 					res.send(data);

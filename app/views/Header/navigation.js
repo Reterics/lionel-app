@@ -9,7 +9,9 @@ if (!header) {
 		icon: 'logoWhite.png',
 		colorScheme: 'dark',
 		items: ['index'],
-		default: 'index'
+		default: 'index',
+		alignment: 'left', // left,center,right
+		background: 'steelblue'
 	}).node;
 	const node = document.createElement('header');
 	node.classList.add('main');

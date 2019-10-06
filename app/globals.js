@@ -274,6 +274,7 @@ const LionelClient = {
 		 * @returns {Helper}
 		 */
 		setStyles (styles) {
+			const self = this;
 			if (styles && typeof styles === 'object' && self.node instanceof HTMLElement) {
 				const keys = Object.keys(styles);
 
@@ -917,6 +918,20 @@ const LionelClient = {
 			return this;
 		},
 
+		/**
+		 * @param {function} options.isActive
+		 * @param {boolean} options.vertical
+		 * @param {string} options.id
+		 * @param {Array} options.items
+		 * @param {string} options.default
+		 * @param {string} options.alignment
+		 * @param {string} options.colorScheme
+		 * @param {string} options.background
+		 * @param {string} options.icon
+		 * @param {string} options.title
+		 * @param options
+		 * @returns {LionelClient}
+		 */
 		createNavHeader (options) {
 			if (!options) {
 				options = {};
@@ -930,13 +945,18 @@ const LionelClient = {
 
 			if (options.colorScheme === 'dark') {
 				nav.classList.add('navbar-dark');
-				nav.classList.add('bg-dark');
+				if (typeof options.background === 'string') {
+					nav.style.backgroundColor = options.background;
+				} else {
+					nav.classList.add('bg-dark');
+				}
 			} else {
 				nav.classList.add('navbar-light');
-				nav.classList.add('bg-light');
-			}
-			if (options.background) {
-				nav.style.backgroundColor = options.background;
+				if (typeof options.background === 'string') {
+					nav.style.backgroundColor = options.background;
+				} else {
+					nav.classList.add('bg-light');
+				}
 			}
 			const brand = document.createElement('a');
 			brand.classList.add('navbar-brand');
@@ -1030,6 +1050,7 @@ const LionelClient = {
 		 * @param {string} options.id
 		 * @param {Array} options.items
 		 * @param {string} options.default
+		 * @param {string} options.alignment
 		 * @returns {LionelClient}
 		 */
 		createNavigation (options) {
@@ -1041,7 +1062,23 @@ const LionelClient = {
 				options.id = 'navID' + new Date().getTime();
 			}
 			this.node.id = options.id;
-			this.addClass(options.vertical ? 'navbar-nav flex-column' : 'navbar-nav mr-auto');
+			const possibleAlignments = ['left', 'center', 'right'];
+			const alignment = options.alignment && possibleAlignments.includes(options.alignment) ? options.alignment : 'left';
+			if (options.vertical) {
+				this.addClass('navbar-nav flex-column');
+			} else {
+				if (alignment === 'center') {
+					this.setStyles({
+						marginLeft: 'auto',
+						marginRight: 'auto'
+					});
+					this.addClass('navbar-nav');
+				} else if (alignment === 'left') {
+					this.addClass('navbar-nav mr-auto');
+				} else if (alignment === 'right') {
+					this.addClass('navbar-nav ml-auto');
+				}
+			}
 			if (Array.isArray(options.items)) {
 				const isDefault = function (item, index, pathName) {
 					if (pathName === '/') {
@@ -1062,7 +1099,7 @@ const LionelClient = {
 						if (typeof item === 'string') {
 							// a.setAttribute('href','');
 							a.innerHTML = item;
-							const pathName = location.pathname;
+							const pathName = decodeURI(location.pathname);
 							if ((pathName.startsWith('/') && pathName.substring(1) === item) ||
 								isDefault(item, index, pathName)) {
 								li.classList.add('active');
@@ -1127,15 +1164,6 @@ const LionelClient = {
 			}
 			const sidebar = LionelClient.Helper.createElement('aside', {});
 
-			if (typeof options.parent === 'string') {
-				document.querySelectorAll('header.main .nav-link').forEach(function (node) {
-					if (options.parent === node.innerHTML) {
-						node.parentElement.classList.add('active');
-					} else {
-						node.parentElement.classList.remove('active');
-					}
-				});
-			}
 			if (options.colorScheme === 'dark') {
 				sidebar.node.classList.add('navbar-dark');
 				sidebar.node.classList.add('bg-dark');
@@ -1155,6 +1183,21 @@ const LionelClient = {
 			sidebarElement.appendChild(navigation);
 
 			if (options.position) {
+				const pathName = decodeURI(location.pathname.substring(1).split('?')[0]);
+				if (!options.items.includes(pathName)) {
+					if (!options.parent || typeof options.parent !== 'string' || pathName !== options.parent) {
+						return sidebarElement;
+					}
+				}
+				if (typeof options.parent === 'string') {
+					document.querySelectorAll('header.main .nav-link').forEach(function (node) {
+						if (options.parent === node.innerHTML) {
+							node.parentElement.classList.add('active');
+						} else {
+							node.parentElement.classList.remove('active');
+						}
+					});
+				}
 				const container = document.querySelector('.LionelPageContent');
 				if (container) {
 					container.style.display = 'flex';
@@ -1268,17 +1311,18 @@ const LionelClient = {
 				return;
 			}
 			parentElement.innerHTML = result.html;
-			if (document.querySelector('#rendered' + name) !== null && window['_onRendered_' + name] !== undefined) {
+			if (document.querySelector('#rendered' + name.replace(' ', '')) !== null && window['_onRendered_' + name] !== undefined) {
 				LionelClient._pageOnRendered(name);
 				LionelClient._scriptOnRendered('', '_onRendered_' + name);
 			} else if (result.onRendered) {
 				const script = document.createElement('script');
 				script.type = 'text/javascript';
-				script.id = 'rendered' + name;
+				script.id = 'rendered' + name.replace(' ', '');
 				// if(global.devMode === true){
 				//    script.src = 'console/'+name;
 				// }else{
-				script.innerHTML = 'window._onRendered_' + name + '=function(c){window.LionelError = "";LionelClient._pageOnRendered();try{\n' + result.onRendered + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};LionelClient._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
+				const scriptName = !name.includes('"') ? '"_onRendered_' + name + '"' : "'_onRendered_" + name + "'";
+				script.innerHTML = 'window[' + scriptName + ']=function(c){window.LionelError = "";LionelClient._pageOnRendered();try{\n' + result.onRendered + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};LionelClient._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
 				// }
 				// script.src = 'rendered/'+result.onRendered+'.js';
 				document.querySelector('body').appendChild(script);

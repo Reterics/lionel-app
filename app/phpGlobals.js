@@ -1084,7 +1084,8 @@ const LionelClient = {
 				// if(global.devMode === true){
 				//    script.src = 'console/'+name;
 				// }else{
-				script.innerHTML = 'window._onRendered_' + name + '=function(c){window.LionelError = "";LionelClient._pageOnRendered();try{\n' + result.onRendered + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};LionelClient._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
+				const scriptName = !name.includes('"') ? '"_onRendered_' + name + '"' : "'_onRendered_" + name + "'";
+				script.innerHTML = 'window[' + scriptName + ']=function(c){window.LionelError = "";LionelClient._pageOnRendered();try{\n' + result.onRendered + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};LionelClient._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
 				// }
 				// script.src = 'rendered/'+result.onRendered+'.js';
 				document.querySelector('body').appendChild(script);
