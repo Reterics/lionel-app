@@ -395,7 +395,7 @@ class TemplateManagerBaseCore {
 				loadedCache: cacheFormat
 			};
 
-			this._templates[name].onRendered = commonJSBundler.makeCode(html, controllerDir, options);
+			this._templates[name].onRendered = commonJSBundler.makeCode(html, file.replace(name + '.js', ''), options);
 
 			if (isGlobal && Array.isArray(options.loadedFiles) && options.loadedFiles.length) {
 				options.loadedFiles.forEach(function (file) {

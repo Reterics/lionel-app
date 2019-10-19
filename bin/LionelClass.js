@@ -190,7 +190,7 @@ const Lionel = {
 		 */
 		handleRequest: function (url, res) {
 			if (this.debug) console.log('Check URL: ' + url);
-			let path = url.substring(1).split('?')[0] || ''; // Remove / and GET parameters
+			let path = url.substring(1).split('?')[0] || 'index'; // Remove / and GET parameters, default: index
 			if (path.includes('%')) {
 				path = decodeURI(path);
 			}
