@@ -90,6 +90,10 @@ const Lionel = {
 		routes: {},
 		resFolder: publicFolder,
 		currentTemplate: '',
+		/**
+		 * @param {String} url
+		 * @param {function|undefined} callback
+		 */
 		route: function (url, callback) {
 			if (typeof url !== 'string') {
 				return;
@@ -115,6 +119,11 @@ const Lionel = {
 				};
 			}
 		},
+		/**
+		 * @param {String} url
+		 * @param callback
+		 * @returns {string}
+		 */
 		checkRoute: function (url, callback) {
 			// callback for the result
 			if (url.charAt(0) === '/') {
@@ -137,15 +146,20 @@ const Lionel = {
 			}
 			return templateName;
 		},
+		/**
+		 * @param {String} templateName
+		 * @returns {*|null|boolean}
+		 */
 		templateExists: function (templateName) {
 			if (typeof templateName === 'string') {
-				if (templateName.includes('%')) {
-					templateName = decodeURI(templateName);
-				}
 				templateName = this.checkRoute(templateName);
 			}
 			return templateName && Lionel.templateManager && typeof Lionel.templateManager._templates[templateName] !== 'undefined';
 		},
+		/**
+		 * @param {String} templateName
+		 * @returns {String}
+		 */
 		render: function (templateName) {
 			this.currentTemplate = templateName;
 			return templateName;
@@ -159,7 +173,7 @@ const Lionel = {
 					if (data.onRendered) {
 						data = data.onRendered;
 					}
-					const scriptName = !name.includes('"') ? '"_onRendered_' + name + '"' : "'_onRendered_" + name + "'";
+					const scriptName = !name.includes('"') ? '"_onRendered_' + name + '"' : '\'_onRendered_' + name + '\'';
 					data = 'global[' + scriptName + ']=function(c){window.LionelError = "";Lionel._pageOnRendered();try{\n' + data + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};Lionel._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
 					res.setHeader('Content-Type', 'application/javascript');
 					// res.type('application/javascript');
@@ -169,15 +183,19 @@ const Lionel = {
 			}
 			return true;
 		},
+		/**
+		 * @param {String} url
+		 * @param {Object} res
+		 * @returns {boolean}
+		 */
 		handleRequest: function (url, res) {
 			if (this.debug) console.log('Check URL: ' + url);
-			let path = url.substring(1) || '';
+			let path = url.substring(1).split('?')[0] || ''; // Remove / and GET parameters
 			if (path.includes('%')) {
 				path = decodeURI(path);
 			}
 			if (this.templateExists(path)) {
-				const templateName = this.checkRoute(path);
-				Lionel.templateManager.renderTemplate('__html', { template: templateName }, res);
+				Lionel.templateManager.renderTemplate('__html', { template: path }, res);
 				return true;
 			}
 			return !this.isSecureConsole(url, res);
