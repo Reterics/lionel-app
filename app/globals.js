@@ -140,6 +140,27 @@ const LionelClient = {
 		});
 	},
 	/**
+	 * We can attack external scripts asynchronously to our page
+	 * @param {string} url
+	 * @param then - Callback [Optional]
+	 * @returns {Promise<any>}
+	 */
+	loadScript: function (url, then) {
+		return new Promise((resolve) => {
+			const script = document.createElement('script');
+			script.type = 'text/javascript';
+			document.body.appendChild(script);
+
+			script.onload = function () {
+				if (typeof then === 'function') {
+					then(script);
+				}
+				resolve(script);
+			};
+			script.src = url;
+		});
+	},
+	/**
 	 * We can load external javascript libraries through this Javascript function.
 	 * This is a god async way the save network traffic
      * @param {string} name
