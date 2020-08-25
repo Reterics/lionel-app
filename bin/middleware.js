@@ -94,6 +94,7 @@ const lionelMiddleware = function () {
 
 	/**
 	 * This function extends the response object, because it doesnt contain send function by default
+	 * @param req
 	 * @param res
 	 */
 	const apply = function (req, res) {
@@ -114,7 +115,11 @@ const lionelMiddleware = function () {
 		}
 		if (typeof req === 'object') {
 			if (typeof req.path !== 'string') {
-				req.path = url.parse(req.url).pathname;
+				if (req.url) {
+					req.path = url.parse(req.url).pathname;
+				} else {
+					req.path = '';
+				}
 			}
 		}
 	};
