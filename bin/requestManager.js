@@ -96,11 +96,14 @@ const postCall = function (req, res) {
 				result = Lionel._methods[method].apply(user, content);
 				res.setHeader('Content-Type', 'application/json');
 				if (result === undefined) {
-					result = { status: 'undefined' };
+					result = { status: undefined };
+					res.send(JSON.stringify(result));
 				} else if (result instanceof Promise) {
 					result.then(function (data) {
-						if (typeof data === 'string' || typeof data === 'number') {
+						if (typeof data === 'string') {
 							res.send(data);
+						} else if (typeof data === 'number') {
+							res.send(data.toString());
 						} else {
 							res.send(JSON.stringify(data));
 						}
@@ -108,8 +111,10 @@ const postCall = function (req, res) {
 						res.setHeader('Content-Type', 'text/plain');
 						res.send('<h1 style="margin-top: 60px">500 - Error in Processing request</h1>');
 					});
-				} else if (typeof result === 'string' || typeof result === 'number') {
+				} else if (typeof result === 'string') {
 					res.send(result);
+				} else if (typeof result === 'number') {
+					res.send(result.toString());
 				} else {
 					res.send(JSON.stringify(result));
 				}
@@ -121,7 +126,7 @@ const postCall = function (req, res) {
 		}
 	} else {
 		res.setHeader('Content-Type', 'application/json');
-		res.send('{status: \'Method is not found\'}');
+		res.send('{\'status\': \'Method is not found\'}');
 	}
 };
 

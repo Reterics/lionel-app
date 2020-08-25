@@ -1251,7 +1251,10 @@ const LionelClient = {
 			} else if (name.indexOf(':') !== -1) {
 				name = name.toString().split(':')[0];
 			}
-			name = name.replace('/', '');
+			if (name.startsWith('/')) {
+				name = name.substring(1);
+			}
+			// name = name.replace('/', '');
 			LionelClient.call('__getRenderedTemplate', name, (error, result) => {
 				if (error) {
 					reject(new Error(error));
@@ -1281,10 +1284,13 @@ const LionelClient = {
 		if (name.includes('?')) { // Remove GET attributes
 			name = name.split('?')[0];
 		}
-		name = name.replace('/', '');
+		if (name.startsWith('/')) {
+			name = name.substring(1);
+		}
+		// name = name.replace('/', '');
 		LionelClient.call('__getRenderedTemplate', name, function (error, result) {
 			if (!error) {
-				self._renderPage(name, parent, result);
+				self._renderPage(name.replace('/', ''), parent, result);
 			} else {
 				if (result && result.details) {
 					result = { html: 'Error: ' + result.details.message + '<br> URL: ' + result.details.url + '<br>Please refresh the page if it doesnt happen automatically.' };

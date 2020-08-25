@@ -96,7 +96,8 @@ const lionelMiddleware = function () {
 	 * This function extends the response object, because it doesnt contain send function by default
 	 * @param res
 	 */
-	const apply = function (res) {
+	const apply = function (req, res) {
+		const url = require('url');
 		if (typeof res === 'object') {
 			if (typeof res.send !== 'function') {
 				res.send = function (content) {
@@ -104,8 +105,20 @@ const lionelMiddleware = function () {
 					res.end();
 				};
 			}
+			if (typeof res.redirect !== 'function') {
+				res.redirect = function (uri) {
+					res.writeHead(301, { Location: uri });
+					res.end();
+				};
+			}
+		}
+		if (typeof req === 'object') {
+			if (typeof req.path !== 'string') {
+				req.path = url.parse(req.url).pathname;
+			}
 		}
 	};
+
 	self.isLionel = true;
 
 	self.listen = function (req, res) {
@@ -114,7 +127,7 @@ const lionelMiddleware = function () {
 				res.end();
 			}
 		};
-		apply(res);
+		apply(req, res);
 		if (!middlewareList.length) {
 			closeResponse();
 			return;
