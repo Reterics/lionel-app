@@ -55,7 +55,7 @@ class TemplateManagerBaseCore {
 		if (options.global) {
 			this.setGlobalJS(options.global);
 		} else {
-			this.setGlobalJS(path.resolve(__dirname,'../app/globals.js'));
+			this.setGlobalJS(path.resolve(__dirname, '../app/globals.js').replace(/\\/g, '\\\\'));
 		}
 		this.loadGlobalJS();
 		if (options.view) {
@@ -315,12 +315,14 @@ class TemplateManagerBaseCore {
 
 		if (typeof this.globalJS === 'string') {
 			const modulePath = path.resolve(this.globalJS)
+				.replace(process.cwd(), '')
+				.replace(/\\/g, '\\\\')
 				.replace('lobals.js', 'lobals')
 				.replace('phpG', 'g');
 			const loadToGlobal = 'const { LionelClient } = window.require("' + modulePath + '");';
 
 			this.globalStorage.push(modulePath);
-			this.globalStorage.push(modulePath + '.js');
+			// this.globalStorage.push(modulePath + '.js');
 			const assignToJS = 'window._modules["' + modulePath + '.js"] = window._modules["' + modulePath + '"]';
 			this._templates.__globals = {
 				onRendered: loader + commonJSBundler.packInBundle(modulePath, globalJavascript) + loadToGlobal + assignToJS
@@ -328,7 +330,6 @@ class TemplateManagerBaseCore {
 		} else {
 			this._templates.__globals = { onRendered: '' };
 		}
-
 	}
 
 	/**
@@ -383,8 +384,8 @@ class TemplateManagerBaseCore {
 
 			const isGlobal = name === '__html';
 
-			let cacheFormat = {};
-			if (Array.isArray(this.globalStorage) && this.globalStorage.length){
+			const cacheFormat = {};
+			if (Array.isArray(this.globalStorage) && this.globalStorage.length) {
 				this.globalStorage.forEach(function (line) {
 					cacheFormat[line] = '_';
 				});
@@ -419,7 +420,7 @@ class TemplateManagerBaseCore {
 
 		const isGlobal = name === '__html';
 
-		this._templates[name].onRendered = commonJSBundler.makeCode(html, address.substring(0,address.lastIndexOf('/') + 1), {
+		this._templates[name].onRendered = commonJSBundler.makeCode(html, address.substring(0, address.lastIndexOf('/') + 1), {
 			loadedFiles: isGlobal ? this.globalStorage : {},
 			loadedCache: isGlobal ? {} : this.globalStorage
 		});

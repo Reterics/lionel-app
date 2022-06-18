@@ -11,11 +11,12 @@ if (!header) {
 		items: ['index'],
 		default: 'index',
 		alignment: 'left', // left,center,right
-		background: 'steelblue'
+		background: 'steelblue',
+		bootstrap: '4'
 	}).node;
 	const node = document.createElement('header');
 	node.classList.add('main');
 	node.appendChild(navigation);
 
-	document.body.insertBefore(node,document.querySelector('.LionelPageContent'));
+	document.body.insertBefore(node, document.querySelector('.LionelPageContent'));
 }

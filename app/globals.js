@@ -255,12 +255,12 @@ const LionelClient = {
 				if (lib) {
 					callback(false, lib);
 				} else {
-					if (getLib) {
+					if (typeof getLib === 'function') {
 						getLib();
 					}
 				}
 			}
-			_statement(_getLib());
+			_statement(_getLib);
 		});
 	},
 	Helper: {
@@ -950,6 +950,8 @@ const LionelClient = {
 		 * @param {string} options.background
 		 * @param {string} options.icon
 		 * @param {string} options.title
+		 * @param {string} options.bootstrap
+		 * @param {'fluid'|'lg'|'sm'|'md'|'xl'|'xxl'|undefined|'default'} options.container
 		 * @param options
 		 * @returns {LionelClient}
 		 */
@@ -957,28 +959,44 @@ const LionelClient = {
 			if (!options) {
 				options = {};
 			}
-			const nav = document.createElement('nav');
-			nav.classList.add('navbar');
-			nav.classList.add('navbar-expand-lg');
+			if (!options.bootstrap) {
+				options.bootstrap = '4';
+			}
+			const navOuter = document.createElement('nav');
+			navOuter.classList.add('navbar');
+			navOuter.classList.add('navbar-expand-lg');
 			if (options.vertical) {
-				nav.classList.add('flex-column');
+				navOuter.classList.add('flex-column');
 			}
 
 			if (options.colorScheme === 'dark') {
-				nav.classList.add('navbar-dark');
+				navOuter.classList.add('navbar-dark');
 				if (typeof options.background === 'string') {
-					nav.style.backgroundColor = options.background;
+					navOuter.style.backgroundColor = options.background;
 				} else {
-					nav.classList.add('bg-dark');
+					navOuter.classList.add('bg-dark');
 				}
 			} else {
-				nav.classList.add('navbar-light');
+				navOuter.classList.add('navbar-light');
 				if (typeof options.background === 'string') {
-					nav.style.backgroundColor = options.background;
+					navOuter.style.backgroundColor = options.background;
 				} else {
-					nav.classList.add('bg-light');
+					navOuter.classList.add('bg-light');
 				}
 			}
+			let navFluidContainer;
+			if (options.bootstrap === '5' || options.container) {
+				navFluidContainer = document.createElement('div');
+				options.container = options.container.trim();
+				if ((options.bootstrap === '5' && options.container) || options.container === 'fluid') {
+					navFluidContainer.classList.add('container-' + options.container);
+				} else {
+					navFluidContainer.classList.add('container');
+				}
+			} else {
+				navFluidContainer = navOuter;
+			}
+
 			const brand = document.createElement('a');
 			brand.classList.add('navbar-brand');
 			brand.href = '#';
@@ -995,10 +1013,10 @@ const LionelClient = {
 				} else {
 					brand.appendChild(img);
 				}
-				nav.appendChild(brand);
+				navFluidContainer.appendChild(brand);
 			} else if (options.title) {
 				brand.innerHTML += options.title;
-				nav.appendChild(brand);
+				navFluidContainer.appendChild(brand);
 			}
 
 			const navbar = document.createElement('div');
@@ -1010,7 +1028,7 @@ const LionelClient = {
 
 				const toggleButton = document.createElement('button');
 				toggleButton.className = 'navbar-toggler';
-				toggleButton.setAttribute('tyoe', 'button');
+				toggleButton.setAttribute('type', 'button');
 				toggleButton.setAttribute('data-toggle', 'collapse');
 				toggleButton.setAttribute('data-target', '#' + customInnerId);
 				toggleButton.setAttribute('aria-controls', 'navbarSupportedContent');
@@ -1019,14 +1037,19 @@ const LionelClient = {
 
 				toggleButton.innerHTML = '<span class="navbar-toggler-icon"></span>';
 
-				nav.appendChild(toggleButton);
+				navFluidContainer.appendChild(toggleButton);
 			}
 
 			this.createNavigation(options);
 			const navigation = this.node;
 			navbar.appendChild(navigation);
-			nav.appendChild(navbar);
-			this.node = nav;
+			navFluidContainer.appendChild(navbar);
+			if (options.bootstrap === '5' || options.container) {
+				navOuter.appendChild(navFluidContainer);
+				this.node = navOuter;
+			} else {
+				this.node = navFluidContainer;
+			}
 
 			return this;
 		},
@@ -1072,6 +1095,8 @@ const LionelClient = {
 		 * @param {Array} options.items
 		 * @param {string} options.default
 		 * @param {string} options.alignment
+		 * @param {string} options.bootstrap
+		 * @param {boolean|undefined} options.caseInSensitive
 		 * @returns {LionelClient}
 		 */
 		createNavigation (options) {
@@ -1081,6 +1106,12 @@ const LionelClient = {
 			this.node = document.createElement('ul');
 			if (!options.id) {
 				options.id = 'navID' + new Date().getTime();
+			}
+			if (!options.bootstrap) {
+				options.bootstrap = '4';
+			}
+			if (typeof options.caseInSensitive !== 'boolean') {
+				options.caseInSensitive = true;
 			}
 			this.node.id = options.id;
 			const possibleAlignments = ['left', 'center', 'right'];
@@ -1095,15 +1126,23 @@ const LionelClient = {
 					});
 					this.addClass('navbar-nav');
 				} else if (alignment === 'left') {
-					this.addClass('navbar-nav mr-auto');
+					if (options.bootstrap === '5') {
+						this.addClass('navbar-nav me-auto');
+					} else {
+						this.addClass('navbar-nav mr-auto');
+					}
 				} else if (alignment === 'right') {
-					this.addClass('navbar-nav ml-auto');
+					if (options.bootstrap === '5') {
+						this.addClass('navbar-nav ms-auto');
+					} else {
+						this.addClass('navbar-nav ml-auto');
+					}
 				}
 			}
 			if (Array.isArray(options.items)) {
 				const isDefault = function (item, index, pathName) {
 					if (pathName === '/') {
-						if (options.default === item) {
+						if (options.default === item || (options.caseInSensitive && options.default.toLowerCase() === item.toLowerCase())) {
 							return true;
 						} else if (!options.default && !index) {
 							return true;
@@ -1111,6 +1150,19 @@ const LionelClient = {
 					}
 					return false;
 				};
+				const onClickFunction = function (item, index, pathName) {
+					LionelClient.navigate('/' + item);
+
+					document.querySelectorAll('#' + options.id + ' li.nav-item > a').forEach((a, index) => {
+						if ((a.innerHTML === item) || (options.caseInSensitive && a.innerHTML.toLowerCase() === item.toLowerCase()) ||
+							(pathName === '/' && !index)) {
+							a.parentElement.classList.add('active');
+						} else {
+							a.parentElement.classList.remove('active');
+						}
+					});
+				};
+				const pathName = decodeURI(location.pathname);
 				options.items.forEach((item, index) => {
 					if (item) {
 						const li = document.createElement('li');
@@ -1120,22 +1172,12 @@ const LionelClient = {
 						if (typeof item === 'string') {
 							// a.setAttribute('href','');
 							a.innerHTML = item;
-							const pathName = decodeURI(location.pathname);
 							if ((pathName.startsWith('/') && pathName.substring(1) === item) ||
 								isDefault(item, index, pathName)) {
 								li.classList.add('active');
 							}
 							a.onclick = function () {
-								LionelClient.navigate('/' + item);
-
-								document.querySelectorAll('#' + options.id + ' li.nav-item > a').forEach((a, index) => {
-									if ((a.innerHTML === item) ||
-										(pathName === '/' && !index)) {
-										a.parentElement.classList.add('active');
-									} else {
-										a.parentElement.classList.remove('active');
-									}
-								});
+								onClickFunction(item, index, pathName);
 							};
 						} else if (item instanceof HTMLElement) {
 							li.appendChild(item);
@@ -1154,8 +1196,13 @@ const LionelClient = {
 								a.innerHTML = '';
 							}
 							a.innerHTML += item.innerHTML;
-							if (typeof options.isActive === 'function' && options.isActive(li, item.innerHTML)) {
+							if (typeof options.isActive === 'function' && options.isActive(li, item.innerHTML, item, pathName)) {
 								li.classList.add('active');
+							} else if (item.href) {
+								if (pathName === item.href || pathName === item.href.split('?')[0].split('#')[0] ||
+									isDefault(item.href.substring(1), index, pathName)) {
+									li.classList.add('active');
+								}
 							}
 						}
 						li.appendChild(a);
@@ -1348,7 +1395,7 @@ const LionelClient = {
 				// if(global.devMode === true){
 				//    script.src = 'console/'+name;
 				// }else{
-				const scriptName = !name.includes('"') ? '"_onRendered_' + name + '"' : "'_onRendered_" + name + "'";
+				const scriptName = !name.includes('"') ? '"_onRendered_' + name + '"' : '\'_onRendered_' + name + '\'';
 				script.innerHTML = 'window[' + scriptName + ']=function(c){window.LionelError = "";LionelClient._pageOnRendered();try{\n' + result.onRendered + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};LionelClient._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
 				// }
 				// script.src = 'rendered/'+result.onRendered+'.js';
