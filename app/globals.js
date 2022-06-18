@@ -987,7 +987,9 @@ const LionelClient = {
 			let navFluidContainer;
 			if (options.bootstrap === '5' || options.container) {
 				navFluidContainer = document.createElement('div');
-				options.container = options.container.trim();
+				if (options.container) {
+					options.container = options.container.trim();
+				}
 				if ((options.bootstrap === '5' && options.container) || options.container === 'fluid') {
 					navFluidContainer.classList.add('container-' + options.container);
 				} else {
