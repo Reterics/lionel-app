@@ -244,7 +244,6 @@ const initLionelServer = function (port, options) {
 	}
 
 	if (options.liveUpdate) {
-		const { enableSTDIN } = require('./initLionelServer');
 		enableSTDIN(Lionel, options.lib, options.js);
 	}
 
@@ -268,7 +267,7 @@ const initLionelServer = function (port, options) {
  * @param libFolder
  * @param jsFolder
  */
-const enableSTDIN = function (Lionel, libFolder, jsFolder) {
+function enableSTDIN (Lionel, libFolder, jsFolder) {
 	process.stdin.resume();
 	process.stdin.on('data', function () {
 		if (Lionel.templateManager._lastUpdated) {
@@ -285,7 +284,7 @@ const enableSTDIN = function (Lionel, libFolder, jsFolder) {
 			let needUpdate = false;
 			libKeys.forEach(lib => {
 				if (libList[lib] > time) {
-					console.log(lib + 'is updated');
+					console.log(lib + ' is updated');
 					needUpdate = true;
 				}
 			});
@@ -295,7 +294,7 @@ const enableSTDIN = function (Lionel, libFolder, jsFolder) {
 			} else {
 				jsKeys.forEach(js => {
 					if (jsList[js] > time) {
-						console.log(js + 'is updated');
+						console.log(js + ' is updated');
 						Lionel.templateManager.loadOneClientFile(js);
 						needUpdate = true;
 					}
@@ -306,6 +305,6 @@ const enableSTDIN = function (Lionel, libFolder, jsFolder) {
 			}
 		}
 	});
-};
+}
 
 module.exports = { initLionelServer, enableSTDIN };

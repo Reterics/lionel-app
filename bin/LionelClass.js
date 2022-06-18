@@ -121,7 +121,7 @@ const Lionel = {
 		},
 		/**
 		 * @param {String} url
-		 * @param callback
+		 * @param {function|undefined} callback
 		 * @returns {string}
 		 */
 		checkRoute: function (url, callback) {
