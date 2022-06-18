@@ -1153,7 +1153,11 @@ const LionelClient = {
 					return false;
 				};
 				const onClickFunction = function (item, index, pathName) {
-					LionelClient.navigate('/' + item);
+					if (options.caseInSensitive) {
+						LionelClient.navigate('/' + item.toLowerCase());
+					} else {
+						LionelClient.navigate('/' + item);
+					}
 
 					document.querySelectorAll('#' + options.id + ' li.nav-item > a').forEach((a, index) => {
 						if ((a.innerHTML === item) || (options.caseInSensitive && a.innerHTML.toLowerCase() === item.toLowerCase()) ||
