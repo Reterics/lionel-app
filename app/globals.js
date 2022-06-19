@@ -30,12 +30,16 @@ const convertToWHERE = function (key, value) {
 };
 /**
  * Lionel Client Object
+ * @name LionelClient
+ * @module
  */
 const LionelClient = {
 	/**
-     * @param args
-     * @returns {*|Promise<any>}
-     */
+	 * @name call
+	 * @param args
+	 * @method
+	 * @returns {*|Promise<any>}
+	 */
 	call: function (...args) {
 		let i = 1;
 		const isThereCallback = typeof args[args.length - 1] === 'function';
@@ -67,15 +71,15 @@ const LionelClient = {
 	},
 	/**
 	 * This function makes a Rest API Request to the server with the specific parameters to help server to recognize the client
-     * @param {Object} options
-     * @param {string} options.url
-     * @param {string} options.method
-     * @param {string} options.functionName
-     * @param {string[]} options.parameters
-     * @param {function|undefined} options.callback
-     * @returns {Promise<any>}
-     * @private
-     */
+	 * @param {Object} options
+	 * @param {string} options.url
+	 * @param {string} options.method
+	 * @param {string} options.functionName
+	 * @param {string[]} options.parameters
+	 * @param {function|undefined} options.callback
+	 * @returns {Promise<any>}
+	 * @private
+	 */
 	_xmlHTTPRequest: function (options) {
 		if (!options) options = {};
 		const xHTTP = new XMLHttpRequest();
@@ -86,7 +90,10 @@ const LionelClient = {
 		const forSend = {};
 		forSend.method = options.functionName || '';
 		forSend.arguments = options.parameters || [];
-		const statusError = { message: 'You lost connection with the server', url: options.functionName };
+		const statusError = {
+			message: 'You lost connection with the server',
+			url: options.functionName
+		};
 
 		return new Promise((resolve, reject) => {
 			xHTTP.onreadystatechange = function () {
@@ -140,7 +147,9 @@ const LionelClient = {
 		});
 	},
 	/**
-	 * We can attack external scripts asynchronously to our page
+	 * @name loadScript
+	 * @method
+	 * @description We can attack external scripts asynchronously to our page
 	 * @param {string} url
 	 * @param then - Callback [Optional]
 	 * @returns {Promise<any>}
@@ -161,12 +170,14 @@ const LionelClient = {
 		});
 	},
 	/**
-	 * We can load external javascript libraries through this Javascript function.
-	 * This is a god async way the save network traffic
-     * @param {string} name
-     * @param {function|undefined} then
-     * @returns {Promise<any>}
-     */
+	 * @name getPublicJS
+	 * @method
+	 * @description We can load external javascript libraries through this Javascript function.
+	 * This is a good async way the save network traffic
+	 * @param {string} name
+	 * @param {function|undefined} then
+	 * @returns {Promise<any>}
+	 */
 	getPublicJS: function (name, then) {
 		if (Array.isArray(name)) {
 			name = name.join(';');
@@ -194,6 +205,7 @@ const LionelClient = {
 					}
 				}
 			};
+
 			function _checkLib () {
 				const node = document.querySelector('#externalLib' + n);
 				if (node) {
@@ -206,6 +218,7 @@ const LionelClient = {
 					return _errorLib();
 				}
 			}
+
 			function _errorLib () {
 				setTimeout(function () {
 					if (!window[n]) {
@@ -218,6 +231,7 @@ const LionelClient = {
 				}, 1000);
 				return null;
 			}
+
 			const createScript = function (name, html) {
 				const script = document.createElement('script');
 				script.type = 'text/javascript';
@@ -226,6 +240,7 @@ const LionelClient = {
 				// document.querySelector('body').appendChild(script);
 				document.body.appendChild(script);
 			};
+
 			function _getLib () {
 				LionelClient.call('__getPublicJS', name, function (error, result) {
 					if (!error) {
@@ -260,15 +275,558 @@ const LionelClient = {
 					}
 				}
 			}
+
 			_statement(_getLib);
 		});
 	},
-	Helper: {
-		node: null,
+	callList: {},
+	/**
+	 * @name getPageContent
+	 * @method
+	 * @description You can use this function if you want to get HTML and JS data from a specific URL/file
+	 * @param {String} name
+	 * @returns {Promise<any>}
+	 */
+	getPageContent: function (name) {
+		return new Promise((resolve, reject) => {
+			if (!name) {
+				resolve({});
+			}
+			if (name.indexOf('-') !== -1) {
+				name = name.toString().split('-')[0];
+			} else if (name.indexOf(':') !== -1) {
+				name = name.toString().split(':')[0];
+			}
+			if (name.startsWith('/')) {
+				name = name.substring(1);
+			}
+			// name = name.replace('/', '');
+			LionelClient.call('__getRenderedTemplate', name, (error, result) => {
+				if (error) {
+					reject(new Error(error));
+				} else {
+					resolve(result);
+				}
+			});
+		});
+	},
+	/**
+	 * @name getPage
+	 * @method
+	 * @description Load pages/templates to Lionel
+	 *  1. Get the template data from server {html:'HTML Code of page', onRendered:'JS code of page'}
+	 *  2. Put HTML into &lt;div class='LionelPageContent'&gt;&lt;/div&gt; with LionelClient._renderPage
+	 *  3. Checks that there is a &lt;script&gt; for this template or not.
+	 *       -Yes: just call function from that window._onRendered_(nameofTemplate)()
+	 *       -No:  Put into a &lt;script&gt; and append to body, after that will call!
+	 * @param {String} name
+	 * @param {string|undefined} parent
+	 */
+	getPage: function (name, parent) {
+		this.clearAllIntervals();
+		const self = this;
+		if (parent === undefined) parent = '.LionelPageContent';
 
+		if (name.includes('?')) { // Remove GET attributes
+			name = name.split('?')[0];
+		}
+		if (name.startsWith('/')) {
+			name = name.substring(1);
+		}
+		// name = name.replace('/', '');
+		LionelClient.call('__getRenderedTemplate', name, function (error, result) {
+			if (!error) {
+				self._renderPage(name.replace('/', ''), parent, result);
+			} else {
+				if (result && result.details) {
+					result = { html: 'Error: ' + result.details.message + '<br> URL: ' + result.details.url + '<br>Please refresh the page if it doesnt happen automatically.' };
+					self._renderPage(name, parent, result);
+					setTimeout(function () {
+						location.reload();
+					}, 5000);
+				} else if (result && result.message) {
+					result = { html: 'Error: ' + result.message + '<br> URL: ' + result.url + '<br>Please refresh the page if it doesnt happen automatically.' };
+					self._renderPage(name, parent, result);
+					setTimeout(function () {
+						location.reload();
+					}, 5000);
+				}
+			}
+		}).catch(function (e) {
+			if (e.url === '__getRenderedTemplate') {
+				console.error('Session has no longer active or the server is down');
+			}
+		});
+	},
+	/**
+	 * 1. Put HTML into &lt;div class='LionelPageContent'&gt;&lt;/div&gt; with LionelClient._renderPage
+	 * 2. Checks that there is a &lt;script&gt; for this template or not.
+	 *      -Yes: just call function from that global._onRendered_(nameofTemplate)()
+	 *      -No:  Put into a &lt;script&gt; and append to body, after that will call!
+	 *
+	 * Handles some error from the server, but not too much
+	 * @param {String} name      - Name of template
+	 * @param {String} parent    - This usually .LionelPageContent
+	 * @param {Object} result    - {html:'HTML Code of page', onRendered:'JS code of page'}
+	 * @private
+	 */
+	_renderPage: function (name, parent, result) {
+		if (document.querySelector('#__render_' + name) !== null) {
+			document.querySelector('#__render_' + name).outerHTML = '';
+		}
+		if (result !== undefined && result !== false && typeof result === 'object') {
+			const parentElement = document.querySelector(parent);
+			if (parentElement === null) {
+				document.body.innerHTML = '<h1>Bad Config on Client Side</h1>Browser will be refreshed in 3 seconds.';
+				setTimeout(function () {
+					location.reload();
+				}, 3000);
+				return;
+			}
+			parentElement.innerHTML = result.html;
+			if (document.querySelector('#rendered' + name.replace(' ', '')) !== null && window['_onRendered_' + name] !== undefined) {
+				LionelClient._pageOnRendered(name);
+				LionelClient._scriptOnRendered('', '_onRendered_' + name);
+			} else if (result.onRendered) {
+				const script = document.createElement('script');
+				script.type = 'text/javascript';
+				script.id = 'rendered' + name.replace(' ', '');
+				// if(global.devMode === true){
+				//    script.src = 'console/'+name;
+				// }else{
+				const scriptName = !name.includes('"') ? '"_onRendered_' + name + '"' : '\'_onRendered_' + name + '\'';
+				script.innerHTML = 'window[' + scriptName + ']=function(c){window.LionelError = "";LionelClient._pageOnRendered();try{\n' + result.onRendered + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};LionelClient._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
+				// }
+				// script.src = 'rendered/'+result.onRendered+'.js';
+				document.querySelector('body').appendChild(script);
+				// document.head.appendChild(script);
+			}
+		} else if (typeof result === 'string') {
+			document.querySelector(parent).innerHTML = '<h1>Your session has expired</h1>The current page will be refreshed in 3 seconds.';
+			setTimeout(function () {
+				location.reload();
+			}, 3000);
+		}
+	},
+	_pageOnRendered: function () {
+		this._runScriptsOnPage();
+	},
+	_scriptOnRendered: function (error, onRendered) {
+		if (error) {
+			console.warn('OnRendered unsuccessful: ' + error);
+		}
+		window[onRendered](function (error) {
+			if (error) {
+				console.error(error);
+			}
+		});
+	},
+	/**
+	 * @name navigate
+	 * @method
+	 * @description This is an inner navigation call. You can navigate to another page without refreshing the browser.
+	 * No need to download some external files and globals, so it saves network traffic
+	 * @param href
+	 */
+	navigate: function (href) {
+		if (href.charAt(0) === '/') {
+			href = href.substring(1);
+		}
+
+		window.history.pushState({}, href, href); // TODO - navigating to links including colon (:) causes NS_ERROR_FAILURE
+
+		href = href.replace('#', '');
+		if (href === '') {
+			LionelClient.getPage('index');
+		} else {
+			LionelClient.getPage(href.toString());
+		}
+	},
+	/**
+	 * Refresh scripts on a specific page
+	 * @param parent
+	 * @private
+	 */
+	_runScriptsOnPage: function (parent) {
+		if (!parent) parent = '.LionelPageContent';
+		document.querySelectorAll('body ' + parent + ' script').forEach(function (d) {
+			const p = document.querySelector(parent);
+			const src = d.getAttribute('src');
+			const script = document.createElement('script');
+			script.type = 'text/javascript';
+			if (src !== null) {
+				script.src = src;
+			} else {
+				script.innerHTML = d.innerHTML;
+			}
+			p.appendChild(script);
+			d.outerHTML = '';
+		});
+	},
+	intervalStorage: [],
+	globals: {},
+	/**
+	 * @name clearAllIntervals
+	 * @method
+	 */
+	clearAllIntervals: function () {
+		const self = this;
+		self.intervalStorage.forEach(function (d) {
+			if (d) {
+				self.clearInterval(d);
+			}
+		});
+		self.intervalStorage = [];
+	},
+	/**
+	 * @name setInterval
+	 * @method
+	 * @param {function} f
+	 * @param {number} t
+	 * @returns {number}
+	 */
+	setInterval: function (f, t) {
+		const i = setInterval(f, t);
+		this.intervalStorage.push(i);
+		return i;
+	},
+	/**
+	 * @name clearInterval
+	 * @method
+	 * @param {function} f
+	 */
+	clearInterval: function (f) {
+		let i = null;
+		if (this.intervalStorage) {
+			this.intervalStorage.forEach(function (d, j) {
+				if (d && d === f) {
+					i = j;
+				}
+			});
+		}
+		if (i !== null) {
+			delete this.intervalStorage[i];
+		}
+		return clearInterval(f);
+	},
+	/**
+	 * @name setCookie
+	 * @method
+	 * @param {String} cookieName
+	 * @param {String} cookieValue
+	 */
+	setCookie: function (cookieName, cookieValue) {
+		const exdays = 1;
+		const d = new Date();
+		d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+		const expires = 'expires=' + d.toUTCString();
+		document.cookie = cookieName + '=' + cookieValue + ';' + expires + ';path=/';
+	},
+	/**
+	 * @name getCookie
+	 * @method
+	 * @param {String} cookieName
+	 * @returns {string}
+	 */
+	getCookie: function (cookieName) {
+		const name = cookieName + '=';
+		const decodedCookie = decodeURIComponent(document.cookie);
+		const ca = decodedCookie.split(';');
+		for (let i = 0; i < ca.length; i++) {
+			let c = ca[i];
+			while (c.charAt(0) === ' ') {
+				c = c.substring(1);
+			}
+			if (c.indexOf(name) === 0) {
+				return c.substring(name.length, c.length);
+			}
+		}
+		return '';
+	},
+	/**
+	 * @name mongodb
+	 * @method
+	 * @param queryType
+	 * @param query
+	 * @returns {*|Promise<*>|{add: (function(*, *): *|Promise<*>), find: (function(*, *): *|Promise<*>), update: (function(*, *, *): *|Promise<*>), listCollections: (function(): *|Promise<*>), delete: (function(*, *): *|Promise<*>)}}
+	 */
+	mongodb: function (queryType, query) {
+		if (queryType && query) {
+			return LionelClient.call('mongodb', queryType, query);
+		}
+		return {
+			listCollections: function () {
+				return LionelClient.call('mongodb', 'list');
+			},
+			find: function (collection, filter) {
+				const query = {
+					collection: collection,
+					object: filter
+				};
+				return LionelClient.call('mongodb', 'find', query);
+			},
+			update: function (collection, filter, details) {
+				const query = {
+					collection: collection,
+					object: filter,
+					details: details
+				};
+				return LionelClient.call('mongodb', 'update', query);
+			},
+			delete: function (collection, filter) {
+				const query = {
+					collection: collection,
+					object: filter
+				};
+				return LionelClient.call('mongodb', 'delete', query);
+			},
+			add: function (collection, object) {
+				const query = {
+					collection: collection,
+					object: object
+				};
+				return LionelClient.call('mongodb', 'add', query);
+			}
+		};
+	},
+	/**
+	 * @name mysql
+	 * @method
+	 * @param queryType
+	 * @param query
+	 * @returns {*|Promise<*>|{listTables: (function(): *|Promise<*>), selectAll: (function(string): *|Promise<*>), select: ((function(string, string): (*|Promise<*>))|*), removeTable: (function(*): *|Promise<*>), update: ((function(string, (string|Object), (string|Object)): (*|Promise<*>))|*), delete: ((function(string, (string|Object)): (*|Promise<*>))|*)}}
+	 */
+	mysql: function (queryType, query) {
+		if (queryType && query) {
+			return LionelClient.call('mysql', queryType, query);
+		}
+		return {
+			listTables: function () {
+				return LionelClient.call('mysql', 'list');
+			},
+			removeTable: function (table) {
+				return LionelClient.call('mysql', 'deleteTable', table);
+			},
+			/**
+			 * @param {string} table
+			 * @param {string} filter
+			 */
+			select: function (table, filter) {
+				const target = {
+					target: table,
+					filter: filter
+				};
+
+				if (typeof target.filter === 'object') {
+					const keys = Object.keys(target.filter);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ' AND ';
+							}
+							where += convertToWHERE(key, target.filter[key]);
+						});
+						target.filter = where;
+					} else {
+						return LionelClient.call('mysql', 'listAllIn', table);
+					}
+				}
+
+				return LionelClient.call('mysql', 'listIn', target);
+			},
+			/**
+			 * @param {string} table
+			 */
+			selectAll: function (table) {
+				return LionelClient.call('mysql', 'listAllIn', table);
+			},
+			/**
+			 *
+			 * @param {string} table
+			 * @param {string|Object} filter
+			 * @param {string|Object} data
+			 * @returns {*|*|Promise<any>|Promise<any>}
+			 */
+			update: function (table, filter, data) {
+				const query = {
+					target: table,
+					filter: filter,
+					data: data
+				};
+
+				if (typeof query.filter === 'object') {
+					const keys = Object.keys(query.filter);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ' AND ';
+							}
+							where += convertToWHERE(key, query.filter[key]);
+						});
+						query.filter = where;
+					} else {
+						return new Promise((resolve, reject) => reject(new Error('Invalid Filter')));
+					}
+				}
+				if (typeof query.data === 'object') {
+					const keys = Object.keys(query.data);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ', ';
+							}
+							where += convertToWHERE(key, query.data[key]);
+						});
+						query.data = where;
+					} else {
+						return new Promise((resolve, reject) => reject(new Error('Invalid Data')));
+					}
+				}
+				return LionelClient.call('mysql', 'update', query);
+			},
+			/**
+			 *
+			 * @param {string} table
+			 * @param {string|Object} filter
+			 * @returns {*|*|Promise<any>|Promise<any>}
+			 */
+			delete: function (table, filter) {
+				const query = {
+					target: table,
+					filter: filter,
+				};
+
+				if (typeof query.filter === 'object') {
+					const keys = Object.keys(query.filter);
+					if (keys.length) {
+						let where = '';
+						keys.forEach(function (key, index) {
+							if (index) {
+								where += ' AND ';
+							}
+							where += convertToWHERE(key, query.filter[key]);
+						});
+						query.filter = where;
+					} else {
+						return new Promise((resolve, reject) => reject(new Error('Invalid Filter')));
+					}
+				}
+				return LionelClient.call('mysql', 'delete', query);
+			},
+		};
+	},
+	/**
+	 * @name confirm
+	 * @method
+	 * @param {string} message - Message for Confirmation
+	 * @param {undefined|string} title
+	 * @returns {Promise<boolean>}
+	 */
+	confirm (message, title = 'Confirmation') {
+		return new Promise(resolve => {
+			const node = LionelClient.Helper.createPopup({
+				title: title,
+				innerHTML: message,
+				onclose: () => {
+					setTimeout(() => {
+						resolve(false);
+					}, 0);
+				},
+				buttons: [
+					{
+						value: 'OK',
+						className: 'btn-primary',
+						onclick: () => {
+							node.outerHTML = '';
+							resolve(true);
+							return false;
+						}
+					},
+					{
+						value: 'Cancel',
+						onclick: (e) => {
+							node.outerHTML = '';
+							resolve(false);
+							return false;
+						}
+					}
+				]
+			}).node;
+		});
+	},
+	/**
+	 * @name alert
+	 * @method
+	 * @param {string} message - Message for Alert Box
+	 * @param {undefined|string} title
+	 * @returns {Promise<boolean>}
+	 */
+	alert (message, title = 'Message') {
+		return new Promise(resolve => {
+			const node = LionelClient.Helper.createPopup({
+				title: title,
+				innerHTML: message,
+				onclose: () => {
+					setTimeout(() => {
+						resolve(false);
+					}, 0);
+				},
+				buttons: [
+					{
+						value: 'OK',
+						className: 'btn-primary',
+						onclick: () => {
+							node.outerHTML = '';
+							resolve(true);
+							return false;
+						}
+					}
+				]
+			}).node;
+		});
+	},
+	/**
+	 * @name LionelHelper
+	 * @typedef LionelHelper
+	 * @description Accessible via LionelClient.Helper
+	 * @module
+	 */
+	Helper: {
 		/**
+		 * @name node
+		 * @type {null|HTMLElement}
+		 * @property
+		 */
+		node: null,
+		/**
+		 * @name detach
+		 * @method
+		 * @description Return a new LionelHelper object with the current edited node (original helper will be empty)
+		 * @returns {LionelHelper}
+		 */
+		detach () {
+			const node = this.node;
+			this.node = null;
+			const LionelHelper = Object.assign({}, LionelClient.Helper);
+			LionelHelper.node = node;
+			return LionelHelper;
+		},
+		/**
+		 * @name getNode
+		 * @method
+		 * @returns {HTMLElement}
+		 */
+		getNode () {
+			return this.node;
+		},
+		/**
+		 * @name addClass
+		 * @method
 		 * @param {string|string[]} className
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		addClass (className) {
 			const self = this;
@@ -291,8 +849,10 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name setStyles
+		 * @method
 		 * @param {Object} styles
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		setStyles (styles) {
 			const self = this;
@@ -324,6 +884,12 @@ const LionelClient = {
 			return this;
 		},
 
+		/**
+		 * @name append
+		 * @method
+		 * @param nodes
+		 * @returns {LionelHelper}
+		 */
 		append (...nodes) {
 			if (this.node instanceof HTMLElement) {
 				for (let i = 0; i < nodes.length; i++) {
@@ -338,8 +904,10 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name setAttributes
+		 * @method
 		 * @param {Object} attributes
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		setAttributes (attributes) {
 			if (this.node instanceof HTMLElement && attributes && typeof attributes === 'object') {
@@ -354,9 +922,11 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name on
+		 * @method
 		 * @param {string} eventName
 		 * @param {function} method
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		on (eventName, method) {
 			if (this.node instanceof HTMLElement && eventName &&
@@ -367,9 +937,11 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name setData
+		 * @method
 		 * @param {string} name
 		 * @param {string} data
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		setData (name, data) {
 			if (this.node instanceof HTMLElement && name && typeof name === 'string' && data) {
@@ -379,8 +951,10 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name removeData
+		 * @method
 		 * @param {string} name
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		removeData (name) {
 			if (this.node instanceof HTMLElement && name && typeof name === 'string') {
@@ -390,6 +964,8 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name getData
+		 * @method
 		 * @param {string} name
 		 * @returns {string|null}
 		 */
@@ -400,6 +976,11 @@ const LionelClient = {
 			return null;
 		},
 
+		/**
+		 * @name getAllData
+		 * @method
+		 * @returns {object[]}
+		 */
 		getAllData () {
 			const attributes = this.attributes;
 			const length = attributes.length;
@@ -414,6 +995,8 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name createElement
+		 * @method
 		 * @param {string} type
 		 * @param {Object} details
 		 * @param details.className
@@ -425,7 +1008,8 @@ const LionelClient = {
 		 * @param details.innerElements
 		 * @param details.id
 		 * @param details.checked
-		 * @returns {Helper}
+		 * @param details.attributes
+		 * @returns {LionelHelper}
 		 */
 		createElement (type, details) {
 			if (!type) {
@@ -460,6 +1044,9 @@ const LionelClient = {
 			if (details.innerElement instanceof HTMLElement) {
 				this.node.appendChild(details.innerElement);
 			}
+			if (details.attributes) {
+				this.setAttributes(details.attributes);
+			}
 			if (Array.isArray(details.innerElements)) {
 				details.innerElements.forEach(element => {
 					if (element instanceof HTMLElement) {
@@ -471,12 +1058,14 @@ const LionelClient = {
 				this.node.id = details.id;
 			}
 			if (details.checked) {
-				this.node.id = details.checked;
+				this.node.checked = details.checked;
 			}
 			return this;
 		},
 
 		/**
+		 * @name createTable
+		 * @method
 		 * @param {Array[]} lineArray
 		 * @param {Object} details
 		 * @param details.className
@@ -485,7 +1074,7 @@ const LionelClient = {
 		 * @param details.header
 		 * @param details.footer
 		 * @param details.events
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		createTable (lineArray, details) {
 			if (!lineArray) {
@@ -582,6 +1171,8 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name createSelector
+		 * @method
 		 * @param {Array} options
 		 * @param {Object} details
 		 * @param details.className
@@ -589,7 +1180,7 @@ const LionelClient = {
 		 * @param details.styles
 		 * @param details.label
 		 * @param details.id
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		createSelector (options, details) {
 			if (!options) {
@@ -641,8 +1232,10 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name select
+		 * @method
 		 * @param {string|HTMLElement} selector
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		select (selector) {
 			if (selector) {
@@ -658,7 +1251,8 @@ const LionelClient = {
 		},
 
 		/**
-		 *
+		 * @name createForm
+		 * @method
 		 * @param {InputForm[]} inputs
 		 * @param {Object} details
 		 * @param details.title
@@ -668,7 +1262,7 @@ const LionelClient = {
 		 * @param details.className
 		 * @param details.classList
 		 * @param details.styles
-		 * @returns {Helper}
+		 * @returns {LionelHelper}
 		 */
 		createForm (inputs, details) {
 			if (!inputs) {
@@ -778,7 +1372,8 @@ const LionelClient = {
 		},
 
 		/**
-		 *
+		 * @name createWindow
+		 * @method
 		 * @param {Object} options
 		 * @param options.title
 		 * @param options.onclose
@@ -815,13 +1410,17 @@ const LionelClient = {
 
 			if (typeof options.onclose === 'function') {
 				closeButton.onclick = function () {
-					self.node.outerHTML = '';
+					if (self.node.parentNode) {
+						self.node.outerHTML = '';
+					}
 					options.onclose();
 				};
 			} else if (options.onclose === 'destroy') {
 				const self = this;
 				closeButton.onclick = function () {
-					self.node.outerHTML = '';
+					if (self.node.parentNode) {
+						self.node.outerHTML = '';
+					}
 				};
 			}
 			closeButton.appendChild(times);
@@ -838,12 +1437,12 @@ const LionelClient = {
 			if (Array.isArray(options.nodes)) {
 				options.nodes.forEach(node => {
 					if (node instanceof HTMLElement) {
-						self.node.appendChild(node);
+						content.appendChild(node);
 					}
 				});
 			}
 			if (typeof options.innerHTML === 'string' || typeof options.innerHTML === 'number') {
-				self.node.innerHTML += options.innerHTML;
+				content.innerHTML += options.innerHTML;
 			}
 
 			self.node.appendChild(content);
@@ -862,7 +1461,15 @@ const LionelClient = {
 							element.className += ' ' + button.className;
 						}
 						if (typeof button.onclick === 'function') {
-							element.onclick = button.onclick;
+							element.onclick = function (e) {
+								if (button.onclick.call(self, e)) {
+									self.node.outerHTML = '';
+								}
+							};
+						} else {
+							element.onclick = function () {
+								self.node.outerHTML = '';
+							};
 						}
 						if (typeof button.innerHTML === 'string') {
 							element.innerHTML = button.innerHTML;
@@ -878,15 +1485,18 @@ const LionelClient = {
 
 			return this;
 		},
+
 		/**
-		 *
+		 * @name createPopup
+		 * @method
 		 * @param {Object} options
-		 * @param options.title
-		 * @param options.nodes
-		 * @param options.innerHTML
-		 * @param options.buttons
-		 * @param options.apply
-		 * @param options.onclose
+		 * @param {string} options.title
+		 * @param {undefined|Node[]|Element[]}options.nodes
+		 * @param {undefined|string} options.innerHTML
+		 * @param {undefined|object[]} options.buttons
+		 * @param {undefined|function} options.apply
+		 * @param {undefined|function} options.onclose
+		 * @param {undefined|'sm'|'lg'|'xl'} options.containerSize
 		 * @returns {LionelClient}
 		 */
 		createPopup (options) {
@@ -901,36 +1511,57 @@ const LionelClient = {
 			background.style.background = '#8888888c';
 			background.setAttribute('role', 'dialog');
 
+			let closeCalled = false;
 			if (typeof options.onclose === 'function') {
 				const _onclose = options.onclose;
 				options.onclose = function () {
-					_onclose();
-					background.outerHTML = '';
+					if (!closeCalled) {
+						closeCalled = true;
+						_onclose();
+					}
+					if (background.parentNode) {
+						background.outerHTML = '';
+					}
 				};
 			} else {
 				options.onclose = function () {
-					background.outerHTML = '';
+					if (!closeCalled) {
+						closeCalled = true;
+					}
+					if (background.parentNode) {
+						background.outerHTML = '';
+					}
 				};
 			}
 			background.onclick = function (e) {
 				if (e && e.target instanceof HTMLElement) {
 					if (e.target.className && e.target.className === 'modal fade show') {
-						options.onclose();
+						if (!closeCalled) {
+							closeCalled = true;
+							options.onclose();
+						}
 					} else if (e.target.className === 'close' ||
 						(e.target.tagName.toUpperCase() === 'SPAN' && e.target.parentElement.className === 'close')) {
-						options.onclose();
+						if (!closeCalled) {
+							closeCalled = true;
+							options.onclose();
+						}
 					}
 				}
 			};
 
 			const dialog = document.createElement('div');
-			dialog.className = 'modal-dialog';
+			dialog.classList.add('modal-dialog');
+			if (options.containerSize) {
+				dialog.classList.add('modal-' + options.containerSize);
+			}
 			dialog.setAttribute('role', 'document');
 
 			dialog.appendChild(this.createWindow(options).node);
 
 			background.appendChild(dialog);
 
+			this.node = background;
 			if (options.apply instanceof HTMLElement) {
 				options.apply.appendChild(background);
 			} else {
@@ -940,6 +1571,8 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name createNavHeader
+		 * @method
 		 * @param {function} options.isActive
 		 * @param {boolean} options.vertical
 		 * @param {string} options.id
@@ -1055,6 +1688,12 @@ const LionelClient = {
 
 			return this;
 		},
+
+		/**
+		 * @name GETParameters
+		 * @method
+		 * @returns {object}
+		 */
 		GETParameters () {
 			if (!location.search.startsWith('?')) {
 				return {};
@@ -1089,7 +1728,10 @@ const LionelClient = {
 			});
 			return output;
 		},
+
 		/**
+		 * @name createNavigation
+		 * @method
 		 * @param options
 		 * @param {function} options.isActive
 		 * @param {boolean} options.vertical
@@ -1220,6 +1862,8 @@ const LionelClient = {
 		},
 
 		/**
+		 * @name createSidebar
+		 * @method
 		 * @param options
 		 * @param {function} options.isActive
 		 * @param {boolean} options.vertical
@@ -1288,404 +1932,8 @@ const LionelClient = {
 			return sidebarElement;
 		}
 	},
-	callList: {},
-	/**
-     * You can use this function if you want to get HTML and JS data from a specific URL/file
-     * @param {String} name
-     * @returns {Promise<any>}
-     */
-	getPageContent: function (name) {
-		return new Promise((resolve, reject) => {
-			if (!name) {
-				resolve({});
-			}
-			if (name.indexOf('-') !== -1) {
-				name = name.toString().split('-')[0];
-			} else if (name.indexOf(':') !== -1) {
-				name = name.toString().split(':')[0];
-			}
-			if (name.startsWith('/')) {
-				name = name.substring(1);
-			}
-			// name = name.replace('/', '');
-			LionelClient.call('__getRenderedTemplate', name, (error, result) => {
-				if (error) {
-					reject(new Error(error));
-				} else {
-					resolve(result);
-				}
-			});
-		});
-	},
-	/**
-     * Load pages/templates to Lionel
-     *
-     * 1. Get the template data from server {html:'HTML Code of page', onRendered:'JS code of page'}
-     * 2. Put HTML into < div class='LionelPageContent' ></div> with LionelClient._renderPage
-     * 3. Checks that there is a <script> for this template or not.
-     *      -Yes: just call function from that window._onRendered_(nameofTemplate)()
-     *      -No:  Put into a <script> and append to body, after that will call!
-     *
-     * @param {String} name
-     * @param {string|undefined} parent
-     */
-	getPage: function (name, parent) {
-		this.clearAllIntervals();
-		const self = this;
-		if (parent === undefined) parent = '.LionelPageContent';
-
-		if (name.includes('?')) { // Remove GET attributes
-			name = name.split('?')[0];
-		}
-		if (name.startsWith('/')) {
-			name = name.substring(1);
-		}
-		// name = name.replace('/', '');
-		LionelClient.call('__getRenderedTemplate', name, function (error, result) {
-			if (!error) {
-				self._renderPage(name.replace('/', ''), parent, result);
-			} else {
-				if (result && result.details) {
-					result = { html: 'Error: ' + result.details.message + '<br> URL: ' + result.details.url + '<br>Please refresh the page if it doesnt happen automatically.' };
-					self._renderPage(name, parent, result);
-					setTimeout(function () {
-						location.reload();
-					}, 5000);
-				} else if (result && result.message) {
-					result = { html: 'Error: ' + result.message + '<br> URL: ' + result.url + '<br>Please refresh the page if it doesnt happen automatically.' };
-					self._renderPage(name, parent, result);
-					setTimeout(function () {
-						location.reload();
-					}, 5000);
-				}
-			}
-		}).catch(function (e) {
-			if (e.url === '__getRenderedTemplate') {
-				console.error('Session has no longer active or the server is down');
-			}
-		});
-	},
-	/**
-     * 2. Put HTML into < div class='LionelPageContent' ></div> with LionelClient._renderPage
-     * 3. Checks that there is a <script> for this template or not.
-     *      -Yes: just call function from that global._onRendered_(nameofTemplate)()
-     *      -No:  Put into a <script> and append to body, after that will call!
-     *
-     * Handles some error from the server, but not too much
-     * @param {String} name      - Name of template
-     * @param {String} parent    - This usually .LionelPageContent
-     * @param {Object} result    - {html:'HTML Code of page', onRendered:'JS code of page'}
-     * @private
-     */
-	_renderPage: function (name, parent, result) {
-		if (document.querySelector('#__render_' + name) !== null) {
-			document.querySelector('#__render_' + name).outerHTML = '';
-		}
-		if (result !== undefined && result !== false && typeof result === 'object') {
-			const parentElement = document.querySelector(parent);
-			if (parentElement === null) {
-				document.body.innerHTML = '<h1>Bad Config on Client Side</h1>Browser will be refreshed in 3 seconds.';
-				setTimeout(function () {
-					location.reload();
-				}, 3000);
-				return;
-			}
-			parentElement.innerHTML = result.html;
-			if (document.querySelector('#rendered' + name.replace(' ', '')) !== null && window['_onRendered_' + name] !== undefined) {
-				LionelClient._pageOnRendered(name);
-				LionelClient._scriptOnRendered('', '_onRendered_' + name);
-			} else if (result.onRendered) {
-				const script = document.createElement('script');
-				script.type = 'text/javascript';
-				script.id = 'rendered' + name.replace(' ', '');
-				// if(global.devMode === true){
-				//    script.src = 'console/'+name;
-				// }else{
-				const scriptName = !name.includes('"') ? '"_onRendered_' + name + '"' : '\'_onRendered_' + name + '\'';
-				script.innerHTML = 'window[' + scriptName + ']=function(c){window.LionelError = "";LionelClient._pageOnRendered();try{\n' + result.onRendered + '\n}catch(e){LionelError = e;}if(typeof c === "function"){c(LionelError)};};LionelClient._scriptOnRendered(window.LionelError,"_onRendered_' + name + '");';
-				// }
-				// script.src = 'rendered/'+result.onRendered+'.js';
-				document.querySelector('body').appendChild(script);
-				// document.head.appendChild(script);
-			}
-		} else if (typeof result === 'string') {
-			document.querySelector(parent).innerHTML = '<h1>Your session has expired</h1>The current page will be refreshed in 3 seconds.';
-			setTimeout(function () {
-				location.reload();
-			}, 3000);
-		}
-	},
-	_pageOnRendered: function () {
-		this._runScriptsOnPage();
-	},
-	_scriptOnRendered: function (error, onRendered) {
-		if (error) {
-			console.warn('OnRendered unsuccessful: ' + error);
-		}
-		window[onRendered](function (error) {
-			if (error) {
-				console.error(error);
-			}
-		});
-	},
-	/**
-	 * This is an inner navigation call. You can navigate to an another page without refreshing the browser.
-	 * No need to download some external files and globals, so it saves network traffic
-     * @param href
-     */
-	navigate: function (href) {
-		if (href.charAt(0) === '/') {
-			href = href.substring(1);
-		}
-
-		window.history.pushState({}, href, href); // TODO - navigating to links including colon (:) causes NS_ERROR_FAILURE
-
-		href = href.replace('#', '');
-		if (href === '') {
-			LionelClient.getPage('index');
-		} else {
-			LionelClient.getPage(href.toString());
-		}
-	},
-	/**
-	 * Refresh scripts on a specific page
-	 * @param parent
-	 * @private
-	 */
-	_runScriptsOnPage: function (parent) {
-		if (!parent) parent = '.LionelPageContent';
-		document.querySelectorAll('body ' + parent + ' script').forEach(function (d) {
-			const p = document.querySelector(parent);
-			const src = d.getAttribute('src');
-			const script = document.createElement('script');
-			script.type = 'text/javascript';
-			if (src !== null) {
-				script.src = src;
-			} else {
-				script.innerHTML = d.innerHTML;
-			}
-			p.appendChild(script);
-			d.outerHTML = '';
-		});
-	},
-	intervalStorage: [],
-	globals: {},
-	clearAllIntervals: function () {
-		const self = this;
-		self.intervalStorage.forEach(function (d) {
-			if (d) {
-				self.clearInterval(d);
-			}
-		});
-		self.intervalStorage = [];
-	},
-	setInterval: function (f, t) {
-		const i = setInterval(f, t);
-		this.intervalStorage.push(i);
-		return i;
-	},
-	clearInterval: function (f) {
-		let i = null;
-		if (this.intervalStorage) {
-			this.intervalStorage.forEach(function (d, j) {
-				if (d && d === f) {
-					i = j;
-				}
-			});
-		}
-		if (i !== null) {
-			delete this.intervalStorage[i];
-		}
-		return clearInterval(f);
-	},
-	/**
-     * @param {String} cookieName
-     * @param {String} cookieValue
-     */
-	setCookie: function (cookieName, cookieValue) {
-		const exdays = 1;
-		const d = new Date();
-		d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-		const expires = 'expires=' + d.toUTCString();
-		document.cookie = cookieName + '=' + cookieValue + ';' + expires + ';path=/';
-	},
-	/**
-     * @param {String} cookieName
-     * @returns {string}
-     */
-	getCookie: function (cookieName) {
-		const name = cookieName + '=';
-		const decodedCookie = decodeURIComponent(document.cookie);
-		const ca = decodedCookie.split(';');
-		for (let i = 0; i < ca.length; i++) {
-			let c = ca[i];
-			while (c.charAt(0) === ' ') {
-				c = c.substring(1);
-			}
-			if (c.indexOf(name) === 0) {
-				return c.substring(name.length, c.length);
-			}
-		}
-		return '';
-	},
-	mongodb: function (queryType, query) {
-		if (queryType && query) {
-			return LionelClient.call('mongodb', queryType, query);
-		}
-		return {
-			listCollections: function () {
-				return LionelClient.call('mongodb', 'list');
-			},
-			find: function (collection, filter) {
-				const query = {
-					collection: collection,
-					object: filter
-				};
-				return LionelClient.call('mongodb', 'find', query);
-			},
-			update: function (collection, filter, details) {
-				const query = {
-					collection: collection,
-					object: filter,
-					details: details
-				};
-				return LionelClient.call('mongodb', 'update', query);
-			},
-			delete: function (collection, filter) {
-				const query = {
-					collection: collection,
-					object: filter
-				};
-				return LionelClient.call('mongodb', 'delete', query);
-			},
-			add: function (collection, object) {
-				const query = {
-					collection: collection,
-					object: object
-				};
-				return LionelClient.call('mongodb', 'add', query);
-			}
-		};
-	},
-	mysql: function (queryType, query) {
-		if (queryType && query) {
-			return LionelClient.call('mysql', queryType, query);
-		}
-		return {
-			listTables: function () {
-				return LionelClient.call('mysql', 'list');
-			},
-			removeTable: function (table) {
-				return LionelClient.call('mysql', 'deleteTable', table);
-			},
-			/**
-			 * @param {string} table
-			 * @param {string} filter
-			 */
-			select: function (table, filter) {
-				const target = { target: table, filter: filter };
-
-				if (typeof target.filter === 'object') {
-					const keys = Object.keys(target.filter);
-					if (keys.length) {
-						let where = '';
-						keys.forEach(function (key, index) {
-							if (index) {
-								where += ' AND ';
-							}
-							where += convertToWHERE(key, target.filter[key]);
-						});
-						target.filter = where;
-					} else {
-						return LionelClient.call('mysql', 'listAllIn', table);
-					}
-				}
-
-				return LionelClient.call('mysql', 'listIn', target);
-			},
-			/**
-			 * @param {string} table
-			 */
-			selectAll: function (table) {
-				return LionelClient.call('mysql', 'listAllIn', table);
-			},
-			/**
-			 *
-			 * @param {string} table
-			 * @param {string|Object} filter
-			 * @param {string|Object} data
-			 * @returns {*|*|Promise<any>|Promise<any>}
-			 */
-			update: function (table, filter, data) {
-				const query = {
-					target: table,
-					filter: filter,
-					data: data
-				};
-
-				if (typeof query.filter === 'object') {
-					const keys = Object.keys(query.filter);
-					if (keys.length) {
-						let where = '';
-						keys.forEach(function (key, index) {
-							if (index) {
-								where += ' AND ';
-							}
-							where += convertToWHERE(key, query.filter[key]);
-						});
-						query.filter = where;
-					} else {
-						return new Promise((resolve, reject) => reject(new Error('Invalid Filter')));
-					}
-				}
-				if (typeof query.data === 'object') {
-					const keys = Object.keys(query.data);
-					if (keys.length) {
-						let where = '';
-						keys.forEach(function (key, index) {
-							if (index) {
-								where += ', ';
-							}
-							where += convertToWHERE(key, query.data[key]);
-						});
-						query.data = where;
-					} else {
-						return new Promise((resolve, reject) => reject(new Error('Invalid Data')));
-					}
-				}
-				return LionelClient.call('mysql', 'update', query);
-			},
-			/**
-			 *
-			 * @param {string} table
-			 * @param {string|Object} filter
-			 * @returns {*|*|Promise<any>|Promise<any>}
-			 */
-			delete: function (table, filter) {
-				const query = {
-					target: table,
-					filter: filter,
-				};
-
-				if (typeof query.filter === 'object') {
-					const keys = Object.keys(query.filter);
-					if (keys.length) {
-						let where = '';
-						keys.forEach(function (key, index) {
-							if (index) {
-								where += ' AND ';
-							}
-							where += convertToWHERE(key, query.filter[key]);
-						});
-						query.filter = where;
-					} else {
-						return new Promise((resolve, reject) => reject(new Error('Invalid Filter')));
-					}
-				}
-				return LionelClient.call('mysql', 'delete', query);
-			},
-		};
-	}
 };
-if (!window._modules) { window._modules = {}; }
+if (!window._modules) {
+	window._modules = {};
+}
 module.exports = { LionelClient };

@@ -1,7 +1,7 @@
-# **Lionel-App**
+# <a href='https://www.meteor.com'><img src='https://reterics.com/lionel.png' height='60' alt='Lionel'></a>
 [![TravisCI Status](https://api.travis-ci.org/RedAty/lionel-app.svg?branch=master)](https://travis-ci.org/RedAty/lionel-app)
 
-Lionel is an open-source and minimalist environment to build your apps easily. You can make little webpages for your company, create presentations, or make just a little web server.
+Lionel is an open-source and minimalist environment to build your apps easily. You can create little websites for your company, presentations, or web applications.
 
 With Lionel you can create:
 
@@ -143,8 +143,11 @@ Router.route('/', 'index');
 ```
 ## Future updates
 
-Because of the Lionel App project is not done, it means i will send more updates in the future with
+Because of the Lionel App project is not done, I try to make the best out of it with giving new features, and fixing issues like:
 
 
-    * A Core development guide
-    * Node JS Multicore and server management: Helps to your server to use more CPU and break the limits of Node JS
+    * A Core Bug fixes
+    * Scalability: Helps to your server to use more CPU and break the limits of Node JS
+    * Fix bugs from user feedbacks
+    * Empty project generator
+    * User Documentation

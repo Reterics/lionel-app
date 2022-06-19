@@ -1,7 +1,8 @@
+const { LionelClient } = require('../globals');
 LionelClient.getPublicJS('jquery;popper;bootstrap;holder')
-	.then(()=>{
+	.then(() => {
 		console.log('Every javascript are loaded');
 	})
-	.catch(error=>{
-	console.error(error);
-});
+	.catch(error => {
+		console.error(error);
+	});
